@@ -18,6 +18,14 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); e
   llegar la marca de fin o al pasar la duración. Respeta (o deshace, a elegir) lo que se toque durante la pausa. Nueva
   comprobación de que la web se puede mostrar (`/api/settings/test/web`); solo esa web se añade a `frame-src`.
 
+- **Atresplayer**: Antena 3, laSexta, Neox, Nova, Mega y Atreseries, con logo y guía de programación (la de TDTChannels
+  no los trae; se completa con la EPG_dobleM, leyendo solo esos seis canales). Ruta `/api/atres`.
+- **Mediaset con Widevine**: Telecinco, Cuatro, FDF, Energy, Divinity, Be Mad y Boing se reproducen en el navegador con
+  Shaka Player y la CDM Widevine del propio navegador (rutas `/api/mediaset*`). El servidor solo reenvía manifiesto,
+  segmentos y licencia con las cabeceras de la web de Mediaset; no extrae claves ni descifra.
+- **Orden**: La 1, La 2, Antena 3, Cuatro, Telecinco y laSexta ocupan del 1 al 6, seguidas del resto de Mediaset y de
+  Atresmedia.
+
 ## [1.0.0] — 2026-10-30
 
 Primera versión publicable.

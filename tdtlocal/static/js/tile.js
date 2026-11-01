@@ -6,6 +6,7 @@ import { audioTarget, audioTouched } from './lib/adbreak.js';
 import { chainFor } from './audio.js';
 import { buildPlan, usesHls } from './lib/plan.js';
 import { ytEmbed } from './lib/youtube.js';
+import { startMediaset } from './lib/mediaset.js';
 
 const ATTEMPT_TIMEOUT_MS = 15000;
 const MAX_NETWORK_RETRIES = 3;
@@ -309,6 +310,7 @@ export class Tile {
     clearTimeout(this.timer);
     if (this.session && this.session.cleanup) this.session.cleanup();
     if (this.hls) { this.hls.destroy(); this.hls = null; }
+    if (this.shaka) { this.shaka.destroy(); this.shaka = null; }
     if (this.tag && this.stt) postStt(this.tag, false);
     this.tag = '';
     this.fragStart.clear();
@@ -420,13 +422,46 @@ export class Tile {
     this.timer = setTimeout(fail, ATTEMPT_TIMEOUT_MS);
 
     const embed = ytEmbed(step.u);
-    if (embed) {
+    if (step.u.startsWith('atres:')) {
+      this.attachAtres(c, step.u.slice(6), s, { fail, success, lost, startPlay });
+    } else if (step.u.startsWith('mediaset:')) {
+      this.attachMediaset(step.u.slice(9), s, { fail, success, lost, startPlay });
+    } else if (embed) {
       this.attachYoutube(c, embed, success);
     } else if (typeof Hls !== 'undefined' && Hls.isSupported() && usesHls(c, step)) {
       this.attachHls(url, s, { fail, success, lost, startPlay });
     } else {
       this.attachDirect(url, s, { fail, success, lost, startPlay });
     }
+  }
+
+  // Atresplayer: the server resolves the (clear) HLS URL, then it plays like any other channel
+  attachAtres(c, key, s, handlers) {
+    fetch('/api/atres?c=' + encodeURIComponent(key))
+      .then((r) => r.json())
+      .then((d) => {
+        if (this.session !== s) return; // another channel was chosen meanwhile
+        if (!d.url) throw new Error(d.error || 'sin URL');
+        const url = '/proxy?u=' + encodeURIComponent(d.url) + '&s=' + this.tag;
+        if (typeof Hls !== 'undefined' && Hls.isSupported()) this.attachHls(url, s, handlers);
+        else this.attachDirect(url, s, handlers);
+      })
+      .catch(() => handlers.fail());
+  }
+
+  // Mediaset: DASH + Widevine through the browser's own CDM (Shaka); the local server only relays opaque bytes
+  attachMediaset(key, s, { fail, success, lost, startPlay }) {
+    const video = this.video;
+    const onOk = () => success();
+    video.addEventListener('loadeddata', onOk);
+    s.cleanup = () => video.removeEventListener('loadeddata', onOk);
+    startMediaset(video, key, (err) => (s.ok ? lost() : fail(err)))
+      .then((player) => {
+        if (this.session !== s) { player.destroy(); return; } // another channel was chosen meanwhile
+        this.shaka = player;
+        startPlay();
+      })
+      .catch(() => fail());
   }
 
   attachYoutube(c, embed, success) {

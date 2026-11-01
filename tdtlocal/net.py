@@ -138,15 +138,20 @@ class Net:
         return parts
 
     def open(
-        self, url: str, headers: dict[str, str] | None = None, require_allowed: bool = True, timeout: float = 20
+        self,
+        url: str,
+        headers: dict[str, str] | None = None,
+        require_allowed: bool = True,
+        timeout: float = 20,
+        data: bytes | None = None,
     ) -> Any:
-        """Open ``url`` after validating it. The caller must close the response."""
+        """Open ``url`` (a POST when ``data`` is given) after validating it. The caller must close the response."""
         url = url.replace(" ", "%20")
         self.check_url(url, require_allowed)
         opener = urllib.request.build_opener(_RedirectGuard(self), urllib.request.HTTPSHandler(context=self._ctx))
         merged = dict(DEFAULT_HEADERS)
         merged.update(headers or {})
-        return opener.open(urllib.request.Request(url, headers=merged), timeout=timeout)
+        return opener.open(urllib.request.Request(url, data=data, headers=merged), timeout=timeout)
 
     def stream_trusted(self, url: str, headers: dict[str, str] | None = None, timeout: float = 30) -> Any:
         """Open a fixed, program-defined URL (a model download) for streaming. The caller closes the response."""

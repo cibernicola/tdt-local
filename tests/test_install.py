@@ -121,7 +121,7 @@ class CreditsTests(ServerCase):
         notice = (PROJECT_DIR / "NOTICE").read_text(encoding="utf-8")
         _, _, about = self.request("GET", "/about.html")
         for text in (notice, about.decode("utf-8")):
-            for name in ("TDTChannels", "hls.js", "Apache"):
+            for name in ("TDTChannels", "hls.js", "Shaka Player", "dobleM", "Apache"):
                 self.assertIn(name, text)
 
     def test_licence_is_apache_2(self):
@@ -132,7 +132,8 @@ class CreditsTests(ServerCase):
 
     def test_the_vendored_library_ships_with_its_licence(self):
         vendor = PROJECT_DIR / "tdtlocal" / "static" / "vendor"
-        self.assertIn("Apache License", (vendor / "hls.js-LICENSE.txt").read_text(encoding="utf-8"))
+        for licence in ("hls.js-LICENSE.txt", "shaka-player-LICENSE.txt"):
+            self.assertIn("Apache License", (vendor / licence).read_text(encoding="utf-8"))
 
     def test_main_page_links_to_the_credits(self):
         _, _, html = self.request("GET", "/")

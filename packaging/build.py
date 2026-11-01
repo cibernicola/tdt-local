@@ -104,7 +104,7 @@ def deb_copyright() -> str:
         "License: Apache-2.0\n"
         " On Debian systems, the full text of the Apache License 2.0 can be found in\n"
         " /usr/share/common-licenses/Apache-2.0 and in /usr/share/doc/tdt-local/LICENSE.\n"
-        " This package also bundles hls.js (Apache-2.0) and the Python runtime (PSF License);\n"
+        " This package also bundles hls.js and Shaka Player (Apache-2.0) and the Python runtime (PSF License);\n"
         " see /usr/share/doc/tdt-local/NOTICE.\n"
     )
 

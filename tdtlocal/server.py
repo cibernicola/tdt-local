@@ -11,7 +11,7 @@ import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 
-from . import __version__
+from . import __version__, atresplayer, mediaset
 from .ads import web_origin
 from .ai import ModelError
 from .app import App
@@ -159,6 +159,12 @@ class Handler(BaseHTTPRequestHandler):
             self._json(200, app.transcriber.poll(arg("s", 40), after))
         elif path == "/api/epg":
             self._json(200, app.epg.payload(arg("id", 200)))
+        elif path == "/api/mediaset":
+            self._mediaset_resolve(arg("c", 30))
+        elif path == "/api/atres":
+            self._atres_resolve(arg("c", 30))
+        elif path == "/api/mediaset/p":
+            self._mediaset_media(arg("u", MAX_PROXY_URL + 1))
         elif path == "/proxy":
             self._proxy(arg("u", MAX_PROXY_URL + 1), arg("c", 100), arg("s", 40))
         elif path == "/logo":
@@ -207,6 +213,8 @@ class Handler(BaseHTTPRequestHandler):
             self._json(200, {"ok": True})
         elif path == "/api/ai":
             self._ask_ai()
+        elif path == "/api/mediaset/license":
+            self._mediaset_license(urllib.parse.parse_qs(parts.query).get("u", [""])[0][:MAX_PROXY_URL])
         elif path == "/api/custom":
             try:
                 self._json(200, {"ok": True, "id": app.store.add_custom(self._body())})
@@ -252,6 +260,68 @@ class Handler(BaseHTTPRequestHandler):
             self._json(502, {"error": f"el modelo no responde en {app.config.llm_url}"})
         except Exception as exc:
             self._json(502, {"error": f"respuesta del modelo no válida ({type(exc).__name__})"})
+
+    # ---- Mediaset (the browser's own Widevine does the decrypting; we only relay opaque bytes)
+    def _mediaset_resolve(self, channel: str) -> None:
+        try:
+            self._json(200, mediaset.resolve(self.app.net, channel))
+        except ValueError as exc:
+            self._json(404, {"error": str(exc)})
+        except Exception as exc:
+            self._json(502, {"error": f"Mediaset: {type(exc).__name__}: {exc}"})
+
+    def _atres_resolve(self, channel: str) -> None:
+        try:
+            url = atresplayer.resolve(self.app.net, channel)
+        except ValueError as exc:
+            self._json(404, {"error": str(exc)})
+            return
+        except Exception as exc:
+            self._json(502, {"error": f"Atresplayer: {type(exc).__name__}: {exc}"})
+            return
+        self.app.net.allow(url)  # the proxy only serves hosts it has been told about
+        self._json(200, {"url": url})
+
+    def _mediaset_media(self, url: str) -> None:
+        try:
+            response = mediaset.open_media(self.app.net, url, self.headers.get("Range", ""))
+        except ValueError as exc:
+            self._json(403, {"error": str(exc)})
+            return
+        except urllib.error.HTTPError as exc:
+            self._json(exc.code if 400 <= exc.code < 600 else 502, {"error": f"origen: HTTP {exc.code}"})
+            return
+        except Exception as exc:
+            self._json(502, {"error": f"origen: {type(exc).__name__}"})
+            return
+        try:
+            with response:
+                body = response.read()
+            if urllib.parse.urlsplit(url).path.lower().endswith(".mpd"):
+                body = mediaset.prepare_mpd(body, url)
+            self._send(
+                200,
+                body,
+                response.headers.get("Content-Type", "application/octet-stream"),
+                {"Cache-Control": "no-store"},
+            )
+        except OSError:
+            pass
+
+    def _mediaset_license(self, url: str) -> None:
+        self._body_read = True
+        try:
+            length = int(self.headers.get("Content-Length") or 0)
+            if not 0 < length <= MAX_BODY:
+                raise ValueError("petición no válida")
+            licence = mediaset.relay_license(self.app.net, url, self.rfile.read(length))
+            self._send(200, licence, "application/octet-stream", {"Cache-Control": "no-store"})
+        except ValueError as exc:
+            self._json(400, {"error": str(exc)})
+        except urllib.error.HTTPError as exc:
+            self._json(exc.code if 400 <= exc.code < 600 else 502, {"error": f"licencia: HTTP {exc.code}"})
+        except Exception as exc:
+            self._json(502, {"error": f"licencia: {type(exc).__name__}"})
 
     # ---- static files and logos
     def _static(self, path: str) -> None:

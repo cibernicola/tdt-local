@@ -19,6 +19,17 @@ TDTChannels  https://github.com/LaQuay/TDTChannels
   TDTChannels does not store any stream: it links to those that broadcasters publish
   openly. Broadcast rights belong to the broadcasters.
 
+Shaka Player  https://github.com/shaka-project/shaka-player
+  Copyright 2016 Google LLC
+  Licence: Apache License 2.0. Version 4.10.0, bundled, unmodified, in tdtlocal/static/vendor/
+  (licence text in shaka-player-LICENSE.txt). Plays Mediaset's DASH + Widevine channels.
+
+dobleM  https://github.com/davidmuma/picons_dobleM  https://github.com/davidmuma/EPG_dobleM
+  Logos (picons_dobleM) and programme guide (EPG_dobleM) of Antena 3, laSexta, Neox, Nova,
+  Mega and Atreseries, which the TDTChannels lists do not cover. Downloaded when the program
+  runs, not distributed with it. The repositories publish no licence file: they are used as
+  published for IPTV applications. Anyone redistributing this should ask the author.
+
 hls.js  https://github.com/video-dev/hls.js
   Copyright (c) 2017 Dailymotion (http://www.dailymotion.com)
   Licence: Apache License 2.0. Bundled, unmodified, in tdtlocal/static/vendor/

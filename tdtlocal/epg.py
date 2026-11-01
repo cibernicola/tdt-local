@@ -25,6 +25,17 @@ TICK_SECONDS = 30  # how often the background loop re-reads the settings
 MAX_GZ = 12_000_000
 MAX_XML = 60_000_000
 DESCRIPTION_LIMIT = 600
+# The TDTChannels guide has no Atresmedia channels: they come from dobleM's (the lightest of his XMLTV variants).
+EXTRA_TV = "https://raw.githubusercontent.com/davidmuma/EPG_dobleM/master/guiatv_sincolor0.xml.gz"
+# our guide id -> the channel id used in that file
+EXTRA_IDS = {
+    "Antena3.TV": "Antena 3 HD",
+    "LaSexta.TV": "La Sexta HD",
+    "Neox.TV": "Neox",
+    "Nova.TV": "Nova",
+    "Mega.TV": "Mega",
+    "Atreseries.TV": "Atreseries",
+}
 XMLTV_TS = re.compile(r"(\d{14})(?:\s*(Z|[+-]\d{4}))?")
 
 
@@ -41,6 +52,21 @@ def xmltv_ts(value: str | None) -> int:
     return ts
 
 
+def _programme(node: ET.Element, now: float) -> tuple[str, Programme] | None:
+    """``(channel, [start, end, title, description, category])`` of a ``<programme>``, or ``None`` if unusable/over."""
+    channel = node.get("channel")
+    try:
+        start, end = xmltv_ts(node.get("start")), xmltv_ts(node.get("stop"))
+    except ValueError:
+        return None
+    title = (node.findtext("title") or "").strip()
+    if not channel or not title or end <= start or end <= now:
+        return None
+    category = (node.findtext("category") or "").strip()
+    desc = (node.findtext("desc") or "").strip()[:DESCRIPTION_LIMIT]
+    return channel, [start, end, title, desc, "" if category == "Desconocido" else category]
+
+
 def parse_xmltv(data: bytes, now: float | None = None) -> dict[str, list[Programme]]:
     """``{epg_id: [[start, end, title, description, category], ...]}`` without programmes already over.
 
@@ -51,25 +77,33 @@ def parse_xmltv(data: bytes, now: float | None = None) -> dict[str, list[Program
     now = time.time() if now is None else now
     root = ET.fromstring(data)  # noqa: S314 - entities rejected above, size capped by the caller
     out: dict[str, list[Programme]] = {}
-    for programme in root.iter("programme"):
-        channel = programme.get("channel")
-        try:
-            start, end = xmltv_ts(programme.get("start")), xmltv_ts(programme.get("stop"))
-        except ValueError:
+    for node in root.iter("programme"):
+        item = _programme(node, now)
+        if item:
+            out.setdefault(item[0], []).append(item[1])
+    for items in out.values():
+        items.sort(key=lambda p: p[0])
+    return out
+
+
+def parse_xmltv_subset(data: bytes, wanted: dict[str, str], now: float | None = None) -> dict[str, list[Programme]]:
+    """Like :func:`parse_xmltv` for some channels only, read as a stream so a big guide is never held whole.
+
+    ``wanted`` maps our guide id to the channel id inside the file; the result is keyed by our id.
+    """
+    if b"<!entity" in data[:4096].lower() or b"<!entity" in data.lower():
+        raise ValueError("XML con entidades: rechazado")
+    now = time.time() if now is None else now
+    theirs = {v: k for k, v in wanted.items()}
+    out: dict[str, list[Programme]] = {}
+    for _, node in ET.iterparse(io.BytesIO(data), events=("end",)):  # noqa: S314 - entities rejected above
+        if node.tag != "programme":
             continue
-        title = (programme.findtext("title") or "").strip()
-        if not channel or not title or end <= start or end <= now:
-            continue
-        category = (programme.findtext("category") or "").strip()
-        out.setdefault(channel, []).append(
-            [
-                start,
-                end,
-                title,
-                (programme.findtext("desc") or "").strip()[:DESCRIPTION_LIMIT],
-                "" if category == "Desconocido" else category,
-            ]
-        )
+        if node.get("channel") in theirs:
+            item = _programme(node, now)
+            if item:
+                out.setdefault(theirs[item[0]], []).append(item[1])
+        node.clear()
     for items in out.values():
         items.sort(key=lambda p: p[0])
     return out
@@ -84,6 +118,11 @@ class EpgSyncer:
         self.net = net
         self._lock = threading.Lock()
         self._next_due = 0.0
+        self._extra_ids: set[str] = set()  # channels whose guide came from EXTRA_TV
+        self._extra: dict[
+            str, list[Programme]
+        ] = {}  # what EXTRA_TV last gave (re-applied when the main guide is replaced)
+        self._extra_etag: str | None = None
 
     def _fetch(self, kind: str, force: bool) -> tuple[dict[str, list[Programme]], str | None] | None:
         """``(guide, etag)``, or ``None`` when the source did not change."""
@@ -105,6 +144,33 @@ class EpgSyncer:
         if len(body) > MAX_XML:
             raise ValueError("la guía descomprimida es demasiado grande")
         return parse_xmltv(body), response_headers.get("ETag")
+
+    def _merge_extra(self, force: bool) -> None:
+        """Add the guide of the channels the main source lacks. Downloaded only when it changes (ETag), but applied
+        every time: a new main guide replaces the dict they live in."""
+        headers = {}
+        if self._extra_etag and self._extra and not force:
+            headers["If-None-Match"] = self._extra_etag
+        try:
+            body, response_headers = self.net.fetch_trusted(EXTRA_TV, headers, limit=MAX_GZ)
+        except urllib.error.HTTPError as exc:
+            if exc.code != 304:
+                raise
+        else:
+            if len(body) > MAX_GZ:
+                raise ValueError("la guía es demasiado grande")
+            if body[:2] == b"\x1f\x8b":
+                body = gzip.GzipFile(fileobj=io.BytesIO(body)).read(MAX_XML + 1)
+            if len(body) > MAX_XML:
+                raise ValueError("la guía descomprimida es demasiado grande")
+            self._extra = parse_xmltv_subset(body, EXTRA_IDS)
+            self._extra_etag = response_headers.get("ETag")
+        store = self.store
+        with store.lock:
+            for key, items in self._extra.items():
+                if key not in store.epg["tv"] or key in self._extra_ids:  # the main guide wins if it ever has them
+                    store.epg["tv"][key] = items
+                    self._extra_ids.add(key)
 
     def sync(self, force: bool = False) -> dict[str, Any]:
         """Download the TV and radio guides. A failure in one does not discard the other."""
@@ -128,6 +194,10 @@ class EpgSyncer:
                     store.epg[kind] = fetched[0]
                     store.epg_meta["etag"][kind] = fetched[1]
                 changed = True
+            try:
+                self._merge_extra(force)
+            except Exception as exc:  # the main guide is still good
+                errors.append(f"atresmedia: {type(exc).__name__} {exc}")
             with store.lock:
                 store.epg_meta.update(checked=now, error="; ".join(errors) or None)
                 if changed:

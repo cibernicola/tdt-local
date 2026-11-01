@@ -37,6 +37,8 @@ comprobado en condiciones simuladas o con pocos casos reales. **📋 Pendiente**
 | Guía de programación (EPG) | ✅ Hecho · cubre unos 175 canales de tele y 50 emisoras |
 | Directos de YouTube incrustados | ✅ Hecho |
 | Canales propios, con cabeceras `Origin` y `Referer` | ✅ Hecho |
+| Atresplayer (Antena 3, laSexta, Neox, Nova, Mega, Atreseries) con logo y guía | 🧪 Probado poco · HLS en claro de la API pública del reproductor |
+| Mediaset (Telecinco, Cuatro, FDF, Energy, Divinity, Be Mad, Boing) con el Widevine del navegador | 🧪 Probado poco · hace falta Chrome o Edge (CDM Widevine) |
 | Favoritos, último canal, volumen y filtros (en el navegador) | ✅ Hecho |
 | Ajustes desde la interfaz, sin reiniciar | ✅ Hecho |
 | Aplicación de escritorio (sin consola, botón «Salir») | ✅ Hecho |
@@ -131,6 +133,16 @@ conexión para descargar las listas; después se usa la última copia guardada e
   del canal activo. Cubre unos 175 canales de tele y unas 50 emisoras; `--no-epg` la desactiva.
 - **YouTube:** los canales cuyo directo es una página de YouTube se reproducen con el reproductor
   oficial incrustado, también en el mosaico. No pasan por el proxy.
+- **Atresplayer:** Antena 3, laSexta, Neox, Nova, Mega y Atreseries salen de la API pública del
+  reproductor web (`NODRM=true`), que devuelve el HLS en claro; después se reproducen como cualquier otro
+  canal. Sus logos vienen de [picons_dobleM](https://github.com/davidmuma/picons_dobleM) y su guía de la
+  [EPG_dobleM](https://github.com/davidmuma/EPG_dobleM) (la de TDTChannels no los trae): se descarga solo si
+  cambia (ETag) y de ella se leen únicamente estos seis canales.
+- **Mediaset:** Telecinco, Cuatro, FDF, Energy, Divinity, Be Mad y Boing usan DASH con Widevine. El servidor
+  resuelve el manifiesto y la licencia (login anónimo de Mediaset) y los reenvía con las cabeceras de su web, que
+  es lo único que su CDN acepta; el reproductor ([Shaka](https://github.com/shaka-project/shaka-player)) pide la
+  licencia con **la CDM Widevine de tu navegador**, que es quien descifra. No se extraen claves ni se descifra
+  nada fuera del navegador. Con un navegador sin Widevine (Chromium sin CDM, Firefox sin DRM) no funcionan.
 - **Canales propios:** «Añadir canal» guarda un enlace que pegues tú (m3u8, mp3/aac o YouTube) en
   `data/custom.json`, con cabeceras `Origin`/`Referer` opcionales que el proxy envía con la lista y
   con cada segmento. Hay un preset para Atresplayer. No se salta DRM ni geobloqueos: solo cabeceras.
@@ -325,8 +337,9 @@ Para avisar de un problema de seguridad, mira [SECURITY.md](SECURITY.md).
 
 ## Límites
 
-- Hay canales sin directo abierto en la lista (p. ej. Cuatro y Telecinco): salen como «solo web» y
-  se ofrece el enlace a su página. No se intenta saltar ningún DRM ni geobloqueo.
+- Hay canales sin directo abierto en la lista: salen como «solo web» y se ofrece el enlace a su página.
+  Telecinco, Cuatro y el resto de Mediaset se reproducen con el Widevine de tu navegador (ver arriba). No se
+  intenta saltar ningún DRM ni geobloqueo.
 - Los streams cambian de URL a menudo. Si uno falla, prueba la otra fuente (botones 1, 2…) o
   actualiza la lista.
 - Whisper falla con música y con emisiones fMP4/CMAF; cada casilla transcrita gasta algo de GPU.

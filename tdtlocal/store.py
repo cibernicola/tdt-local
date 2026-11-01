@@ -8,6 +8,7 @@ import threading
 from pathlib import Path
 from typing import Any
 
+from . import atresplayer, mediaset
 from .config import Config
 from .custom import build_custom_entry, is_youtube
 from .net import Net
@@ -35,9 +36,22 @@ def read_json(path: Path) -> dict[str, Any] | None:
     return data if isinstance(data, dict) else None
 
 
+DIAL = ("la-1", "la-2", "antena3", "cuatro", "telecinco", "lasexta")  # the number each has on the TDT dial
+# then the rest of Mediaset and Atresmedia
+THEN = ("fdf", "energy", "divinity", "be-mad", "boing", "neox", "nova", "mega", "atreseries")
+
+
+def dial_order(channels: list[Channel]) -> list[Channel]:
+    """The main national channels first, in their TDT numbering (1 La 1 ... 6 laSexta), then the rest of
+    Mediaset and Atresmedia; everything else keeps its order."""
+    by_id = {ch["id"]: ch for ch in channels if ch.get("kind") == "tv"}
+    head = [by_id[i] for i in DIAL + THEN if i in by_id]
+    return head + [ch for ch in channels if ch not in head]
+
+
 def source_ok(channel: Channel, url: str, status: dict[str, dict]) -> bool | None:
     """Last health result of one source. YouTube and custom channels are never checked."""
-    if is_youtube(url) or channel.get("custom"):
+    if is_youtube(url) or mediaset.is_mediaset(url) or atresplayer.is_atres(url) or channel.get("custom"):
         return None
     result = status.get(url)
     return result["ok"] if result else None
@@ -81,7 +95,10 @@ class Store:
     # ---- derived views
     def all_channels(self) -> list[Channel]:
         with self.lock:
-            return self.channels + self.radios + self.custom
+            listed = mediaset.attach(self.channels)
+            have = {ch["id"] for ch in listed}
+            extra = [ch for ch in atresplayer.channels() if ch["id"] not in have] if listed else []
+            return dial_order(listed + extra) + self.radios + self.custom
 
     def sources(self, kind: str) -> dict[str, str]:
         """``url -> format`` of the checkable streams of ``"tv"``, ``"radio"`` or ``"all"``."""
@@ -91,7 +108,7 @@ class Store:
             for ch in pool:
                 fmts = ch.get("fmts") or []
                 for i, url in enumerate(ch["sources"]):
-                    if not is_youtube(url):
+                    if not is_youtube(url) and not mediaset.is_mediaset(url):
                         out.setdefault(url, fmts[i] if i < len(fmts) else "")
         return out
 

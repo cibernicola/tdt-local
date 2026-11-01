@@ -6,6 +6,7 @@ import { findChannel, nearestSecs, quickCommand } from '../../tdtlocal/static/js
 import { epgDetail, epgLine, epgOf, progress } from '../../tdtlocal/static/js/lib/epg.js';
 import { categoriesOf, filterChannels } from '../../tdtlocal/static/js/lib/filters.js';
 import { ago, dayLabel, hhmm } from '../../tdtlocal/static/js/lib/format.js';
+import { proxyUri } from '../../tdtlocal/static/js/lib/mediaset.js';
 import { fillAssignments, nextRotation } from '../../tdtlocal/static/js/lib/mosaic.js';
 import { buildPlan, canPlayFormat, usesHls } from '../../tdtlocal/static/js/lib/plan.js';
 import { initials, norm, slug } from '../../tdtlocal/static/js/lib/text.js';
@@ -196,4 +197,12 @@ test('alert words', () => {
   assert.deepEqual(matchingWords('Ha habido un TERREMOTO en Lorca', ['terremoto', 'volcan']), ['terremoto']);
   assert.deepEqual(matchingWords('El Real Madrid gana', ['real madrid']), ['real madrid']);
   assert.deepEqual(matchingWords('nada', []), []);
+});
+
+test('proxyUri sends Mediaset requests through the local relay, once', () => {
+  const mpd = 'https://directos.mediasetinfinity.es/a/web.mpd?x=1&y=2';
+  assert.equal(proxyUri(mpd, false), '/api/mediaset/p?u=' + encodeURIComponent(mpd));
+  assert.equal(proxyUri('https://lic.example/x?a=b', true), '/api/mediaset/license?u=https%3A%2F%2Flic.example%2Fx%3Fa%3Db');
+  const once = proxyUri(mpd, false);
+  assert.equal(proxyUri(once, false), once);
 });
