@@ -3,6 +3,14 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); el proyecto sigue
 [SemVer](https://semver.org/lang/es/).
 
+## [Sin publicar]
+
+### Funciones
+- **CLI `tdtv` y integración con Omarchy** (`scripts/tdtv.py`, `contrib/omarchy/`): una orden para poner un canal o una
+  radio con mpv, ver qué hay según la guía, volumen, zapping, efectos de imagen y teletexto, con salida `--json`; una
+  unidad de systemd para el servidor, un widget de barra y un submenú para Omarchy, y una skill para que los agentes de
+  IA (Claude Code, Codex, Gemini…) manejen la tele. No toca el código de la aplicación.
+
 ## [1.3.0] — 2026-11-01
 
 **Los instaladores llevan ahora la aplicación de escritorio** (ventana propia, bandeja y plugins) en lugar de abrir tu

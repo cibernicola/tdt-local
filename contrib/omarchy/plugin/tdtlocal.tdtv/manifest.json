@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "tdtlocal.tdtv",
+  "name": "TDT local",
+  "version": "0.1.0",
+  "author": "TDT local contributors",
+  "license": "Apache-2.0",
+  "description": "Mini-reproductor de TDT local: canal y programa en emisión, pausa, volumen y acceso a la app. Usa la CLI tdtv (scripts/tdtv.py).",
+  "homepage": "https://github.com/cibernicola/tdt-local",
+  "kinds": ["bar-widget"],
+  "entryPoints": { "barWidget": "BarWidget.qml" },
+  "barWidget": {
+    "displayName": "TDT local",
+    "description": "Lo que suena o se ve ahora desde TDT local",
+    "category": "Media",
+    "aliases": ["tdt", "tv", "tele", "radio", "tdtv"],
+    "allowMultiple": false,
+    "defaultSection": "right"
+  }
+}

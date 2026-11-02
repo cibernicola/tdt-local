@@ -1,0 +1,15 @@
+# Servicio de usuario de systemd para TDT local (cualquier Linux con systemd, no solo Omarchy).
+# Instalación:  cp tdt-local.service ~/.config/systemd/user/ && systemctl --user enable --now tdt-local
+# Ajusta WorkingDirectory a donde esté el código (git clone o release). Solo escucha en 127.0.0.1.
+[Unit]
+Description=TDT local (listas de la TDT, guía, teletexto y proxy HLS) en 127.0.0.1:8788
+
+[Service]
+WorkingDirectory=%h/.local/share/tdt-local/app
+Environment=TDT_DATA_DIR=%h/.local/share/tdt-local/data
+ExecStart=/usr/bin/python3 -m tdtlocal --host 127.0.0.1 --port 8788
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

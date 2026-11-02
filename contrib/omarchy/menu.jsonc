@@ -1,0 +1,21 @@
+{
+  // Entradas para ~/.config/omarchy/extensions/omarchy-menu.jsonc (añádelas dentro del objeto existente).
+  // Necesitan `tdtv` en el PATH (ver README). Los efectos y el teletexto requieren una versión de TDT local que los incluya.
+  "tv": {"icon":"󰟞","label":"TDT","aliases":["tdt","tele","tv"]},
+  "tv.ttx": {"icon":"󰈙","label":"Teletexto","action":"tdtv ttx 100","aliases":["teletexto","ttx"]},
+  "tv.web": {"icon":"󰖟","label":"Abrir TDT local (app)","action":"tdtv web"},
+  "tv.toggle": {"icon":"󰐊","label":"Pausa / reanudar","action":"tdtv toggle","when":"tdtv status | grep -qv parado"},
+  "tv.stop": {"icon":"󰓛","label":"Parar","action":"tdtv stop","when":"tdtv status | grep -qv parado"},
+  "tv.la1": {"icon":"󰕼","label":"La 1","action":"tdtv play 'la 1'"},
+  "tv.la2": {"icon":"󰕼","label":"La 2","action":"tdtv play 'la 2'"},
+  "tv.24h": {"icon":"󰕼","label":"24 Horas","action":"tdtv play 24h"},
+  "tv.rne": {"icon":"󰎆","label":"Radio Nacional","action":"tdtv play 'radio nacional' --radio"},
+  "tv.fx": {"icon":"󰔡","label":"Efectos","aliases":["efectos","fx"],"when":"tdtv status | grep -qv parado"},
+  "tv.fx.matrix": {"icon":"󰆧","label":"Matrix","action":"tdtv fx matrix","checked":"tdtv fx list | grep -q \"● matrix \""},
+  "tv.fx.ascii": {"icon":"󰉼","label":"ASCII","action":"tdtv fx ascii","checked":"tdtv fx list | grep -q \"● ascii \""},
+  "tv.fx.canalplus": {"icon":"󰟞","label":"Canal+ codificado","action":"tdtv fx canalplus","checked":"tdtv fx list | grep -q \"● canalplus \""},
+  "tv.fx.cyberpunk": {"icon":"󱓇","label":"Cyberpunk","action":"tdtv fx cyberpunk","checked":"tdtv fx list | grep -q \"● cyberpunk \""},
+  "tv.fx.vhs": {"icon":"󰕼","label":"VHS","action":"tdtv fx vhs","checked":"tdtv fx list | grep -q \"● vhs \""},
+  "tv.fx.crt": {"icon":"󰍹","label":"Tubo CRT","action":"tdtv fx crt","checked":"tdtv fx list | grep -q \"● crt \""},
+  "tv.fx.off": {"icon":"󰜺","label":"Sin efectos","action":"tdtv fx off"}
+}

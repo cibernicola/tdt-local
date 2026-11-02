@@ -56,6 +56,7 @@ comprobado en condiciones simuladas o con pocos casos reales. **📋 Pendiente**
 | Subtítulos en directo con Whisper | 🧪 Probado poco · alucina con música y voces solapadas |
 | Alertas por voz (palabras vigiladas en las cuatro casillas) | 🧪 Probado poco · misma limitación |
 | Instaladores para Windows, macOS (13 o superior) y Linux | 🧪 Probado poco · sin firmar; pesan unos 100 MB; macOS y Linux sin probar en máquinas limpias |
+| Escritorio Linux y agentes de IA: CLI `tdtv` (canales, guía, volumen, efectos y teletexto con mpv), servicio de systemd y, para [Omarchy](https://omarchy.org/), widget de barra, menú y skill ([`contrib/omarchy`](contrib/omarchy/README.md)) | 🧪 Probado poco · en un Omarchy con Hyprland y mpv; la CLI no se ha probado en otros escritorios |
 | Marcas de anuncios SCTE-35 en las listas HLS: detectar, decodificar, guardar y exportar (JSON y CSV) | ✅ Hecho · comprobado con streams reales |
 | Aviso en pantalla cuando aparece una marca nueva | ✅ Hecho |
 | Marcas SCTE-35 dentro del vídeo (PID del MPEG-TS, eventos `emsg`) | 🧪 Probado poco · solo con datos sintéticos |
