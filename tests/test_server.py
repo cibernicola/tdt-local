@@ -33,6 +33,13 @@ class StaticAndGuardTests(ServerCase):
         self.assertNotIn("unsafe-inline", csp)
         self.assertNotIn("unsafe-eval", csp)
 
+    def test_twitch_csp_only_allows_the_official_sdk_script_and_player_frame(self):
+        _, headers, _ = self.request("GET", "/")
+        directives = dict(part.strip().split(" ", 1) for part in headers["content-security-policy"].split("; "))
+        self.assertEqual(directives["script-src"].split(), ["'self'", "https://player.twitch.tv/js/embed/v1.js"])
+        self.assertIn("https://player.twitch.tv", directives["frame-src"].split())
+        self.assertEqual(directives["connect-src"], "'self'")
+
     def test_content_types_and_conditional_requests(self):
         status, headers, _ = self.request("GET", "/style.css")
         self.assertEqual((status, headers["content-type"]), (200, "text/css; charset=utf-8"))

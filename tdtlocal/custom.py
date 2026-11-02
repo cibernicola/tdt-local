@@ -9,6 +9,7 @@ from .parser import Channel
 from .util import slugify
 
 YOUTUBE = re.compile(r"^https?://(?:www\.|m\.)?(?:youtube\.com|youtube-nocookie\.com|youtu\.be)/", re.I)
+TWITCH = re.compile(r"^https://(?:(?:www\.|m\.)?twitch\.tv/[a-z0-9_]+/?(?:[?#]|$)|player\.twitch\.tv/\?)", re.I)
 HTTP_URL = re.compile(r"https?://\S+$")
 CUSTOM_HEADERS = ("Origin", "Referer", "User-Agent")
 MAX_SOURCES = 6
@@ -18,6 +19,10 @@ MAX_HEADER_LEN = 300
 
 def is_youtube(url: str | None) -> bool:
     return bool(YOUTUBE.match(url or ""))
+
+
+def is_twitch(url: str | None) -> bool:
+    return bool(TWITCH.match(url or ""))
 
 
 def guess_fmt(url: str) -> str:

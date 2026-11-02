@@ -21,6 +21,7 @@ import { fillAssignments, nextRotation } from './lib/mosaic.js';
 import { canPlayFormat } from './lib/plan.js';
 import { atresEmbed } from './lib/embeds.js';
 import { ytEmbed } from './lib/youtube.js';
+import { twitchChannel, withTwitchSources } from './lib/twitch.js';
 import { isGuideOpen, syncGuide, toggleGuide } from './guide.js';
 import { store } from './store.js';
 import { TILES, channelEpgLine, cur, epgEntries, focusTile, nowTs, state } from './state.js';
@@ -96,7 +97,7 @@ function makeRow(c, i) {
   b.append(logo);
   const txt = el('span', 'txt');
   txt.append(el('span', 'name', c.name));
-  const embedName = (u) => (ytEmbed(u) ? 'YouTube' : atresEmbed(u) ? 'Atresplayer' : '');
+  const embedName = (u) => (ytEmbed(u) ? 'YouTube' : atresEmbed(u) ? 'Atresplayer' : twitchChannel(u) ? 'Twitch' : '');
   const embedOnly = c.sources.length && c.sources.every((s) => embedName(s.u)) ? embedName(c.sources[0].u) : '';
   const sub = [c.group || (state.cat ? '' : c.category), c.sources.length ? '' : 'solo web', embedOnly]
     .filter(Boolean).join(' · ');
@@ -633,7 +634,7 @@ async function load(force) {
   state.signature = sig;
   // Atresmedia's catch-up can only be read by the desktop app (see readAtres): its channels join the U7D list there
   const atres = window.tdtDesktop && window.tdtDesktop.atres ? atresChannels(d.channels) : [];
-  state.channels = d.channels.concat(atres);
+  state.channels = d.channels.map(withTwitchSources).concat(atres);
   state.byId = new Map(state.channels.map((c) => [c.id, c]));
   for (const t of state.tiles) if (t.c) t.c = state.byId.get(t.c.id) || t.c;
   rerender();

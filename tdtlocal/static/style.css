@@ -137,6 +137,14 @@ button, input, select { font: inherit; color: inherit; }
 
 /* YouTube: iframe a toda la casilla; la capa .tile-hit recoge los clics de las casillas no activas */
 .tile-yt { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #000; }
+.tile.twitch { min-width: 400px; min-height: 342px; }
+.tile.twitch .tile-yt { top: 42px; height: calc(100% - 42px); }
+.tile.twitch .tile-yt iframe { width: 100%; height: 100%; border: 0; }
+.tiles.multi .tile.twitch:not(.main) .tile-hit { display: none; }
+.twitch-actions { display: none; }
+.tile.twitch .tile-bar { display: flex; height: 42px; padding: 4px 8px; background: #17141f; pointer-events: auto; }
+.tile.twitch .twitch-actions { display: flex; gap: 5px; margin-left: auto; }
+.tile.twitch .tile-epg { display: none; }
 .tile.yt video { display: none; }
 .tile-hit { position: absolute; inset: 0; z-index: 1; display: none; cursor: pointer; }
 .tiles.multi .tile.yt:not(.main) .tile-hit { display: block; }

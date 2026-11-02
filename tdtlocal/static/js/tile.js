@@ -8,6 +8,7 @@ import { ATRES_ORIGIN, ContentClock, audioMessage, fxMessage, parseBridge } from
 import { buildPlan, originNote, usesHls } from './lib/plan.js';
 import { atresEmbed } from './lib/embeds.js';
 import { ytEmbed } from './lib/youtube.js';
+import { loadTwitchSdk, syncTwitchAudio, twitchChannel, twitchWeb } from './lib/twitch.js';
 import { parseU7d } from './lib/u7d.js';
 
 const ATTEMPT_TIMEOUT_MS = 15000;
@@ -78,6 +79,16 @@ export class Tile {
       host.cleared();
     });
     bar.append(this.numEl, this.nameEl, this.epgEl, x);
+    const twitchActions = el('span', 'twitch-actions');
+    const listen = el('button', 'btn', 'Escuchar');
+    listen.type = 'button';
+    listen.setAttribute('aria-label', 'Escuchar Twitch en la casilla ' + (i + 1));
+    listen.addEventListener('click', () => host.requestFocus(i));
+    this.twitchLink = el('a', 'btn', 'Abrir en Twitch');
+    this.twitchLink.target = '_blank';
+    this.twitchLink.rel = 'noopener noreferrer';
+    twitchActions.append(listen, this.twitchLink);
+    bar.append(twitchActions);
 
     this.noticeEl = el('div', 'notice');
     this.noticeEl.hidden = true;
@@ -94,6 +105,7 @@ export class Tile {
 
     // YouTube lives in an <iframe> that swallows clicks: on inactive tiles an overlay catches them
     this.frame = null;
+    this.twitch = null;
     this.frameKind = ''; // 'youtube' (it takes commands) or 'atres' (its own player: only through the bridge script)
     this.onBridge = null; // listener of the messages of the bridge script inside Atresplayer's player
     this.bridged = false;
@@ -145,6 +157,7 @@ export class Tile {
     this.video.muted = want.m;
     if (this.frame && this.frameKind === 'youtube') this.ytCmd(want.m ? 'mute' : 'unMute');
     if (this.frame && this.frameKind === 'atres') this.atresAudio(want);
+    if (this.twitch) syncTwitchAudio(this.twitch, want);
     this.syncFx();
   }
 
@@ -381,6 +394,8 @@ export class Tile {
     this.atresMeter = null;
     this.contentClock = new ContentClock();
     if (this.frame) { this.frame.remove(); this.frame = null; this.frameKind = ''; }
+    this.twitch = null;
+    this.root.classList.remove('twitch');
     this.root.classList.remove('yt');
     this.video.removeAttribute('src');
     this.video.load();
@@ -510,9 +525,12 @@ export class Tile {
 
     const embed = ytEmbed(step.u);
     const atres = atresEmbed(step.u);
+    const twitch = twitchChannel(step.u);
     const u7d = parseU7d(step.u);
     if (u7d) {
       this.attachU7d(u7d, s, { fail, success, lost, startPlay });
+    } else if (twitch) {
+      this.attachTwitch(c, twitch, success, fail);
     } else if (embed) {
       this.attachYoutube(c, embed, success);
     } else if (atres) {
@@ -536,6 +554,42 @@ export class Tile {
         else this.attachDirect(url, s, handlers);
       })
       .catch((err) => { this.reason = String((err && err.message) || err); handlers.fail(); });
+  }
+
+  attachTwitch(c, channel, success, fail) {
+    // Twitch may need longer to initialise a logged-in live player than an HLS manifest.
+    clearTimeout(this.timer);
+    this.timer = setTimeout(fail, 45000);
+    const box = el('div', 'tile-yt');
+    box.id = 'twitch-' + this.i + '-' + this.token;
+    this.frame = box;
+    this.frameKind = 'twitch';
+    this.root.classList.add('yt', 'twitch');
+    this.twitchLink.href = twitchWeb('https://www.twitch.tv/' + channel);
+    this.root.insertBefore(box, this.cover);
+    const token = this.token;
+    loadTwitchSdk().then((Twitch) => {
+      if (token !== this.token || this.frame !== box) return;
+      const player = new Twitch.Player(box.id, {
+        channel, parent: [location.hostname], width: '100%', height: '100%', autoplay: true, muted: true,
+      });
+      player.addEventListener(Twitch.Player.READY, () => {
+        if (token !== this.token || this.frame !== box) return;
+        this.twitch = player;
+        success();
+        this.syncAudio();
+        this.setInfo('Twitch · usa tu sesión del navegador; suscripciones según el canal');
+      });
+      player.addEventListener(Twitch.Player.OFFLINE, () => {
+        if (this.frame === box) this.setInfo('Twitch · el canal está desconectado');
+      });
+      player.addEventListener(Twitch.Player.PLAYBACK_BLOCKED, () => {
+        if (this.frame === box) this.setInfo('Twitch · pulsa reproducir dentro del reproductor');
+      });
+    }).catch(() => {
+      if (this.frame !== box) return;
+      fail();
+    });
   }
 
   attachYoutube(c, embed, success) {

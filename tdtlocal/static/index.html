@@ -154,7 +154,11 @@
       <select id="addKind"><option value="tv">Televisión</option><option value="radio">Radio</option></select>
     </label>
     <label>Nombre <input id="addName" type="text" required maxlength="80" placeholder="La Sexta"></label>
-    <label>Enlace <input id="addUrl" type="text" required placeholder="https://… .m3u8, mp3/aac o un enlace de YouTube"></label>
+    <p class="dlg-hint">Twitch: pega el enlace del canal (https://www.twitch.tv/nombre).
+      <a href="https://www.twitch.tv/login" target="_blank" rel="noopener noreferrer">Iniciar sesión en Twitch</a>
+      en este navegador y vuelve aquí. Twitch gestiona tu cuenta y las ventajas de tus suscripciones;
+      TDT local no guarda tu contraseña. Si no reconoce la sesión, abre el canal en Twitch.</p>
+    <label>Enlace <input id="addUrl" type="text" required placeholder="https://… .m3u8, mp3/aac, YouTube o Twitch"></label>
     <label>Cabeceras de la petición
       <select id="addHdr">
         <option value="">Ninguna</option>

@@ -36,8 +36,10 @@ CONTENT_TYPES = {
 }
 CSP = (
     "default-src 'self'; img-src 'self' data:; media-src 'self' blob: data:; connect-src 'self'; "
-    "worker-src 'self' blob:; script-src 'self'; style-src 'self'; base-uri 'none'; "
-    "frame-src https://www.youtube-nocookie.com https://www.youtube.com https://www.atresplayer.com{web}; "
+    "worker-src 'self' blob:; script-src 'self' https://player.twitch.tv/js/embed/v1.js; "
+    "style-src 'self'; base-uri 'none'; "
+    "frame-src https://www.youtube-nocookie.com https://www.youtube.com https://www.atresplayer.com "
+    "https://player.twitch.tv{web}; "
     "form-action 'none'; frame-ancestors 'none'"
 )
 MAX_BODY = 16384

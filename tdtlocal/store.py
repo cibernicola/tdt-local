@@ -10,7 +10,7 @@ from typing import Any
 
 from . import u7d
 from .config import Config
-from .custom import MAX_SOURCES, build_custom_entry, guess_fmt, is_youtube
+from .custom import MAX_SOURCES, build_custom_entry, guess_fmt, is_twitch, is_youtube
 from .net import Net
 from .parser import Channel
 from .util import normalize
@@ -39,7 +39,7 @@ def read_json(path: Path) -> dict[str, Any] | None:
 
 def source_ok(channel: Channel, url: str, status: dict[str, dict]) -> bool | None:
     """Last health result of one source. YouTube and custom channels are never checked."""
-    if is_youtube(url) or u7d.is_u7d(url) or channel.get("custom"):
+    if is_youtube(url) or is_twitch(url) or u7d.is_u7d(url) or channel.get("custom"):
         return None
     result = status.get(url)
     return result["ok"] if result else None
@@ -95,7 +95,7 @@ class Store:
             for ch in pool:
                 fmts = ch.get("fmts") or []
                 for i, url in enumerate(ch["sources"]):
-                    if not is_youtube(url):
+                    if not is_youtube(url) and not is_twitch(url):
                         out.setdefault(url, fmts[i] if i < len(fmts) else "")
         return out
 

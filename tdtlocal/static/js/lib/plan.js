@@ -1,5 +1,6 @@
 // Which sources to try, and in which order, when a channel is played.
 import { atresEmbed } from './embeds.js';
+import { twitchChannel } from './twitch.js';
 
 const rank = (s) => (s.ok === true ? 0 : s.ok === null ? 1 : 2);
 
@@ -18,7 +19,8 @@ export function buildPlan(channel, { pref, onlyUrl, canPlayFmt = () => true } = 
   // a player that is only embedded always "works" once loaded and offers less (no proxy: no subtitles, markers or
   // leveler), so it is the last resort after the streams
   const embedded = (s) => (atresEmbed(s.u) ? 1 : 0);
-  order.sort((a, b) => first(a) - first(b) || embedded(a) - embedded(b) || rank(a) - rank(b) || a.n - b.n);
+  const twitchFirst = (s) => twitchChannel(s.u) ? -1 : 0;
+  order.sort((a, b) => twitchFirst(a) - twitchFirst(b) || first(a) - first(b) || embedded(a) - embedded(b) || rank(a) - rank(b) || a.n - b.n);
   return order.map((s) => ({ u: s.u, n: s.n, f: s.f || '' }));
 }
 

@@ -2,6 +2,7 @@
 import { postJson } from './api.js';
 import { $ } from './dom.js';
 import { parseAddLink } from './lib/addlink.js';
+import { twitchWeb } from './lib/twitch.js';
 import { GROUPS, atresWeb, missingOf } from './lib/embeds.js';
 import { parseAlertWords } from './lib/alerts.js';
 import { cur, state } from './state.js';
@@ -42,7 +43,7 @@ function initOwnChannels(app) {
     let res;
     try {
       const url = $('addUrl').value.trim();
-      const r = await postJson('/api/custom', { name: $('addName').value, kind, sources: [url], headers, web: atresWeb(url), merge: true });
+      const r = await postJson('/api/custom', { name: $('addName').value, kind, sources: [url], headers, web: atresWeb(url) || twitchWeb(url), merge: true });
       res = await r.json();
     } catch { message('El servidor local no responde.'); return; }
     if (!res.ok) { message(res.error || 'No se pudo añadir el canal.'); return; }
