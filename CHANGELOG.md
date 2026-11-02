@@ -3,6 +3,15 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); el proyecto sigue
 [SemVer](https://semver.org/lang/es/).
 
+## [Sin publicar]
+
+### Funciones
+- **Efectos de imagen** (`static/js/fx.js`, `static/js/lib/fx.js`, `static/fx/`): botón «Efectos» (tecla `E`) con doce
+  efectos —Matrix, ASCII (mono y en color), Canal+ codificado, cyberpunk, VHS, tubo CRT, glitch, visión nocturna, cine
+  negro, negativo y píxel 8 bits— que se aplican a la imagen del canal activo con WebGL 2 y sin dependencias. Cada
+  efecto es un fichero GLSL («hook shader» de mpv), así que los mismos sirven para `mpv --glsl-shaders`. «Canal+
+  codificado» añade el pitido agudo del decodificador. La elección se recuerda en el navegador.
+
 ## [1.3.0] — 2026-11-01
 
 **Los instaladores llevan ahora la aplicación de escritorio** (ventana propia, bandeja y plugins) en lugar de abrir tu

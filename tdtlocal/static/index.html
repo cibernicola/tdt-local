@@ -68,6 +68,7 @@
         <button class="btn" id="btnAlert" type="button" aria-pressed="false" hidden title="Avisarte cuando se diga una palabra en cualquier casilla">Alertas</button>
         <button class="btn" id="btnScte" type="button" hidden title="Marcas de anuncios (SCTE-35) detectadas en los canales">Marcas</button>
         <button class="btn" id="btnGuide" type="button" aria-pressed="false" title="Programación del canal activo">Guía</button>
+        <button class="btn" id="btnFx" type="button" aria-pressed="false" title="Efectos de imagen: Matrix, ASCII, Canal+, cyberpunk, VHS… (E)">Efectos</button>
         <button class="btn" id="btnSound" type="button" title="Igualar el volumen y ecualizador, para todos los canales o solo para este">Sonido</button>
         <button class="btn" id="btnFav" type="button" aria-pressed="false">Favorito</button>
         <button class="btn" id="btnPip" type="button">Ventana flotante</button>
@@ -125,6 +126,7 @@
           <dt>P</dt><dd>ventana flotante</dd>
           <dt>T</dt><dd>cambiar entre televisión y radio</dd>
           <dt>G</dt><dd>guía de programación del canal (Esc la cierra)</dd>
+          <dt>E</dt><dd>efectos de imagen (Matrix, ASCII, Canal+, cyberpunk, VHS…)</dd>
           <dt>U</dt><dd>subtítulos en directo (Whisper) de la casilla activa</dd>
           <dt>Ctrl + K</dt><dd>asistente de IA: preguntas y órdenes</dd>
           <dt>V</dt><dd>multivisión (4 canales)</dd>
@@ -250,6 +252,16 @@
       <button class="btn" type="button" id="alertCancel">Cancelar</button>
     </div>
   </form>
+</dialog>
+<dialog class="dlg dlg-wide" id="fxDlg" aria-labelledby="fxTitle">
+  <h3 id="fxTitle">Efectos de imagen</h3>
+  <p class="dlg-hint">Se aplican a la imagen del canal activo, en tu equipo y con la tarjeta gráfica. «Canal+ codificado» añade el
+    pitido agudo del decodificador; el resto no toca el sonido. Los mismos ficheros sirven de shaders para mpv.</p>
+  <div class="fx-list" id="fxList" role="radiogroup" aria-label="Efecto"></div>
+  <p class="dlg-msg" id="fxMsg" role="status"></p>
+  <div class="dlg-actions">
+    <button class="btn primary" type="button" id="fxClose">Cerrar</button>
+  </div>
 </dialog>
 <script src="/vendor/hls.min.js"></script>
 <script type="module" src="/js/app.js"></script>

@@ -1,0 +1,75 @@
+{
+  "matrix": {
+    "desc": "Lluvia de código verde (Matrix) sobre la imagen",
+    "shader": "matrix.glsl",
+    "af": "aecho=0.8:0.7:90:0.35,lowpass=f=9000",
+    "label": "Matrix"
+  },
+  "ascii": {
+    "desc": "ASCII monocromo, fósforo verde de terminal",
+    "shader": "ascii.glsl",
+    "af": "acrusher=bits=8:mode=lin:mix=0.5:samples=4",
+    "label": "ASCII (fósforo verde)"
+  },
+  "ascii-color": {
+    "desc": "ASCII con el color original de cada celda",
+    "shader": "ascii-color.glsl",
+    "af": "acrusher=bits=8:mode=lin:mix=0.5:samples=4",
+    "label": "ASCII en color"
+  },
+  "canalplus": {
+    "desc": "Canal+ analógico codificado: líneas cortadas y rotadas, barras grises, pitido agudo",
+    "shader": "canalplus.glsl",
+    "af": "aformat=channel_layouts=stereo,lowpass=f=4500,aeval=exprs=0.55*val(0)+0.06*sin(2*PI*9000*t)|0.55*val(1)+0.06*sin(2*PI*9000*t):channel_layout=stereo",
+    "label": "Canal+ codificado",
+    "tone": 9000
+  },
+  "cyberpunk": {
+    "desc": "Neón cian/magenta, aberración cromática, glitch y bloom",
+    "shader": "cyberpunk.glsl",
+    "af": "acrusher=bits=10:mode=log:aa=1:mix=0.35,aecho=0.8:0.6:40:0.25",
+    "label": "Cyberpunk"
+  },
+  "vhs": {
+    "desc": "Cinta VHS: tracking, ruido y color sangrado",
+    "shader": "vhs.glsl",
+    "af": "lowpass=f=7000,vibrato=f=5:d=0.05,highpass=f=80",
+    "label": "VHS"
+  },
+  "crt": {
+    "desc": "Tubo CRT: curvatura, scanlines y máscara de fósforo",
+    "shader": "crt.glsl",
+    "af": "",
+    "label": "Tubo CRT"
+  },
+  "glitch": {
+    "desc": "Bloques desplazados y canales RGB rotos",
+    "shader": "glitch.glsl",
+    "af": "acrusher=bits=6:mode=lin:mix=0.4",
+    "label": "Glitch"
+  },
+  "nightvision": {
+    "desc": "Visión nocturna verde con grano y viñeta",
+    "shader": "nightvision.glsl",
+    "af": "",
+    "label": "Visión nocturna"
+  },
+  "noir": {
+    "desc": "Cine negro: blanco y negro contrastado, grano y arañazos",
+    "shader": "noir.glsl",
+    "af": "",
+    "label": "Cine negro"
+  },
+  "negative": {
+    "desc": "Negativo",
+    "shader": "negative.glsl",
+    "af": "",
+    "label": "Negativo"
+  },
+  "pixel": {
+    "desc": "Píxel-art 8 bits con paleta reducida",
+    "shader": "pixel.glsl",
+    "af": "",
+    "label": "Píxel 8 bits"
+  }
+}

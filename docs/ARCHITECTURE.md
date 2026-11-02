@@ -82,6 +82,7 @@ clásico que define `Hls` antes.
   *host* con lo que necesita de la aplicación, así que no conoce el estado global.
 - `app.js` — controlador de la página (lista, panel, multivisión, subtítulos, datos y teclado).
 - `guide.js`, `assistant.js`, `dialogs.js` — la guía, el asistente y los diálogos.
+- `fx.js` — el diálogo **Efectos**: shaders GLSL de `static/fx/` (lista y textos en `fx.json`) ejecutados con WebGL 2 sobre un `<canvas>` colocado encima del `<video>` de la casilla activa. Los ficheros `.glsl` son «hook shaders» de mpv (`//!HOOK OUTPUT`); `lib/fx.js` los envuelve para WebGL (pura, probada). En `fx.json`, `af` son los filtros de audio de ffmpeg para reproductores externos (la página no los usa).
 - `scte.js` — el diálogo **Marcas** y el sondeo que avisa en pantalla de las marcas de anuncios nuevas (cada 2 s si hay
   una reacción configurada, cada 10 s si no).
 - La guía extra (`epg.py`: `sync_extra`, `extra_ids`): los canales propios con `epg` que ninguna guía de las listas cubre se leen

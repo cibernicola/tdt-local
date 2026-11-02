@@ -449,3 +449,12 @@ a.btn { display: inline-block; text-decoration: none; color: inherit; }
 .tile-ad-bar span { margin-right: auto; }
 .tile-ad-bar .btn { background: transparent; color: #e9ece6; border-color: #6d746f; padding: 2px 8px; font-size: 12px; text-decoration: none; }
 .tile-ad-frame { flex: 1; min-height: 0; width: 100%; border: 0; background: #fff; }
+
+/* Efectos de imagen */
+.fx-canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: var(--screen); z-index: 1; visibility: hidden; pointer-events: none; }
+.fx-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; margin-bottom: 12px; }
+.dlg .fx-item { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--line); border-radius: 4px; padding: 8px 10px; margin: 0; cursor: pointer; color: var(--ink); }
+.fx-item:has(input:checked) { border-color: var(--accent); outline: 1px solid var(--accent); }
+.fx-item input { margin-top: 3px; flex: none; }
+.fx-item span { display: grid; gap: 2px; }
+.fx-item small { color: var(--muted); font-size: 12px; }

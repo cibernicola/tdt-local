@@ -30,6 +30,11 @@ Hechas con la aplicación de escritorio ([docs/DESKTOP.md](docs/DESKTOP.md)); en
 | ![Vista principal con la lista de canales](docs/img/principal.png) | ![U7D: canales con grabaciones de la última semana](docs/img/u7d-canales.png) |
 | ![Ajustes ▸ Plugins](docs/img/plugins.png) | ![Ajustes ▸ Registro](docs/img/registro.png) |
 
+**Efectos de imagen** (botón «Efectos», tecla `E`): los doce efectos sobre un canal de noticias en directo. Pulsa la imagen para ver el
+[vídeo de demostración](docs/img/efectos.mp4) (2 min, con el audio real de cada efecto; la emisión es de RTVE y se muestra solo como ejemplo).
+
+[![Los doce efectos de imagen: Matrix, ASCII, ASCII en color, Canal+, cyberpunk, VHS, CRT, glitch, visión nocturna, cine negro, negativo y píxel](docs/img/efectos.jpg)](docs/img/efectos.mp4)
+
 ## Características y estado
 
 Una por línea. **✅ Hecho**: implementado y con pruebas automáticas. **🧪 Probado poco**: funciona, pero solo se ha
@@ -56,6 +61,7 @@ comprobado en condiciones simuladas o con pocos casos reales. **📋 Pendiente**
 | Subtítulos en directo con Whisper | 🧪 Probado poco · alucina con música y voces solapadas |
 | Alertas por voz (palabras vigiladas en las cuatro casillas) | 🧪 Probado poco · misma limitación |
 | Instaladores para Windows, macOS (13 o superior) y Linux | 🧪 Probado poco · sin firmar; pesan unos 100 MB; macOS y Linux sin probar en máquinas limpias |
+| Efectos de imagen en el reproductor (Matrix, ASCII, Canal+ codificado, cyberpunk, VHS, CRT…): doce shaders GLSL que se aplican al canal activo con WebGL 2 | 🧪 Probado poco · los doce compilan y se ven bien con una imagen de prueba; no se han visto con vídeo en directo en la interfaz |
 | Marcas de anuncios SCTE-35 en las listas HLS: detectar, decodificar, guardar y exportar (JSON y CSV) | ✅ Hecho · comprobado con streams reales |
 | Aviso en pantalla cuando aparece una marca nueva | ✅ Hecho |
 | Marcas SCTE-35 dentro del vídeo (PID del MPEG-TS, eventos `emsg`) | 🧪 Probado poco · solo con datos sintéticos |

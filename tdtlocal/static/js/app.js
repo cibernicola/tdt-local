@@ -5,6 +5,7 @@ import { initAssistant, isAssistantOpen, toggleAssist } from './assistant.js';
 import { initDialogs, removeOwn } from './dialogs.js';
 import { initSettings } from './settings.js';
 import { onWake } from './audio.js';
+import { initFx, toggleFxDialog } from './fx.js';
 import { initScte, openScte, syncScte } from './scte.js';
 import { audioFx, initSound } from './sound.js';
 import { $, el, fillLogo } from './dom.js';
@@ -826,6 +827,7 @@ function onKey(e) {
     case 'v': case 'V': setMode(multi ? 'single' : 'multi'); break;
     case 't': case 'T': setKind(state.kind === 'tv' ? 'radio' : 'tv'); break;
     case 'g': case 'G': toggleGuide(); break;
+    case 'e': case 'E': toggleFxDialog(); break;
     case 'u': case 'U': if (!$('btnSub').hidden) toggleSubs(); break;
     case 'c': case 'C': setPanel(appEl.classList.contains('collapsed')); break;
     case 'r': case 'R': if (multi) toggleRot(); break;
@@ -883,6 +885,7 @@ initScte({
   },
 });
 initSound({ apply: applyAudio });
+initFx();
 onWake(applyAudio); // the audio context starts with the first click or key: only then can a channel be routed through it
 initSettings({ reload: () => load(true), footMsg, openScte });
 applyLayout();
