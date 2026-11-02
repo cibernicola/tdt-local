@@ -20,6 +20,8 @@ from .net import Blocked
 from .scte_routes import handle_get as scte_get
 from .scte_routes import handle_post as scte_post
 from .settings_routes import handle_get, handle_post
+from .teletext_routes import handle_get as teletext_get
+from .teletext_routes import handle_post as teletext_post
 
 log = logging.getLogger(__name__)
 access_log = logging.getLogger("tdtlocal.access")
@@ -153,7 +155,7 @@ class Handler(BaseHTTPRequestHandler):
 
         app = self.app
         path = parts.path
-        if handle_get(self, path) or scte_get(self, path):
+        if handle_get(self, path) or scte_get(self, path) or teletext_get(self, path):
             return
         if path == "/api/channels":
             self._json(200, app.channels_payload())
@@ -211,7 +213,7 @@ class Handler(BaseHTTPRequestHandler):
         parts = urllib.parse.urlsplit(self.path)
         app = self.app
         path = parts.path
-        if handle_post(self, path) or scte_post(self, path):
+        if handle_post(self, path) or scte_post(self, path) or teletext_post(self, path):
             return
         if path == "/api/stt":
             if not app.transcriber.available():

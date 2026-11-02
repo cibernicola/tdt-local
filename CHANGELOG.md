@@ -3,6 +3,15 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); el proyecto sigue
 [SemVer](https://semver.org/lang/es/).
 
+## [Sin publicar]
+
+### Funciones
+- **Teletexto** (`teletext.py`, `teletext_routes.py`, `static/js/teletext.js`, `static/js/lib/teletext.js`): un servicio de
+  teletexto con titulares reales (RSS de EL PAÍS, EL MUNDO y Europa Press), el tiempo (Open-Meteo) y la guía de la tele.
+  Botón «Teletexto» (tecla `X`) con mando numérico, subpáginas y teclas de color, pintado en un `<canvas>` con la fuente
+  Bedstead (CC0) y un decodificador propio del nivel 1. Descarga de internet, así que viene **desactivado**: se activa en
+  Ajustes ▸ Listas y guía. `/api/teletext/page?n=101` devuelve cualquier página como texto, para scripts.
+
 ## [1.3.0] — 2026-11-01
 
 **Los instaladores llevan ahora la aplicación de escritorio** (ventana propia, bandeja y plugins) en lugar de abrir tu

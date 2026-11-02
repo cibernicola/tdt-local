@@ -25,6 +25,12 @@ hls.js  https://github.com/video-dev/hls.js
   (licence text in hls.js-LICENSE.txt). Parts derived from videojs-contrib-hls,
   Copyright (c) 2013-2015 Brightcove, also Apache License 2.0.
 
+Bedstead  https://bjh21.me.uk/bedstead/
+  Licence: CC0 1.0. Bundled, unmodified, in tdtlocal/static/vendor/teletext/ (the teletext font).
+
+Open-Meteo  https://open-meteo.com  (CC BY 4.0)
+  The weather page of the teletext. Downloaded when the teletext is turned on; not distributed.
+
 ------------------------------------------------------------------------------
 Optional programs TDT local can talk to (not included)
 ------------------------------------------------------------------------------

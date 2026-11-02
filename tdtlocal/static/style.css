@@ -449,3 +449,23 @@ a.btn { display: inline-block; text-decoration: none; color: inherit; }
 .tile-ad-bar span { margin-right: auto; }
 .tile-ad-bar .btn { background: transparent; color: #e9ece6; border-color: #6d746f; padding: 2px 8px; font-size: 12px; text-decoration: none; }
 .tile-ad-frame { flex: 1; min-height: 0; width: 100%; border: 0; background: #fff; }
+
+/* Teletexto */
+@font-face { font-family: 'Bedstead'; src: url('/vendor/teletext/bedstead.otf') format('opentype'); }
+.ttx-dlg { width: min(980px, calc(100vw - 32px)); }
+.ttx-body { display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 16px; align-items: start; margin-bottom: 10px; }
+.ttx-screen { background: #000; border: 1px solid var(--line); border-radius: 4px; width: min(100%, calc((100vh - 270px) * 1.28)); justify-self: center; }
+.ttx-remote { display: grid; gap: 10px; }
+.ttx-remote form { display: flex; gap: 8px; align-items: end; }
+.ttx-remote form label { flex: 1; margin: 0; }
+.ttx-remote form input { width: 100%; font-variant-numeric: tabular-nums; text-align: center; font-size: 18px; }
+.ttx-remote .seg { display: flex; align-items: center; }
+.ttx-sub { flex: 1; text-align: center; font-size: 12px; color: var(--muted); padding: 0 6px; }
+.ttx-colours { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.ttx-colours button { border: 1px solid var(--line); border-radius: 4px; padding: 6px 4px; font: inherit; cursor: pointer; display: grid; gap: 1px; justify-items: center; color: #101010; }
+.ttx-colours button small { font-size: 11px; min-height: 13px; }
+.ttx-colours button:disabled { opacity: .35; cursor: default; }
+.ttx-red { background: #e0584f; } .ttx-green { background: #5cbf6a; } .ttx-yellow { background: #e6cb4b; } .ttx-blue { background: #6f8fe0; }
+.ttx-links { display: flex; flex-wrap: wrap; gap: 6px; }
+@media (max-width: 760px) { .ttx-body { grid-template-columns: 1fr; } }
+.ttx-dlg:focus { outline: none; }

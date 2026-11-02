@@ -1,0 +1,7 @@
+Bedstead (bedstead.otf) - a Mode 7 / teletext style font by Ben Harris (bjh21), https://bjh21.me.uk/bedstead/
+
+SPDX-FileCopyrightText: 2021 bjh21 <https://bjh21.me.uk/>
+SPDX-License-Identifier: CC0-1.0
+
+To the extent possible under law the author has waived all copyright and related or neighbouring rights to this work
+(Creative Commons Zero 1.0 Universal, https://creativecommons.org/publicdomain/zero/1.0/). Included unmodified.

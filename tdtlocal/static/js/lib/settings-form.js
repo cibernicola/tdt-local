@@ -76,6 +76,8 @@ export const FIELDS = [
   { name: 'epg_enabled', tab: 'lists', type: 'bool', label: 'Descargar la guía de programación' },
   { name: 'epg_extra_enabled', tab: 'lists', type: 'bool', label: 'Guía extra para tus canales propios que no tienen guía (Atresmedia…)',
     hint: 'Lee de una guía comunitaria (XMLTV) solo los canales tuyos que lo necesitan, unas pocas veces al día. El archivo pesa unos 35 MB.' },
+  { name: 'teletext_enabled', tab: 'lists', type: 'bool', label: 'Teletexto con noticias, tiempo y guía',
+    hint: 'Descarga cada 20 minutos titulares públicos (EL PAÍS, EL MUNDO, Europa Press) y el tiempo (Open-Meteo) para el botón «Teletexto».' },
   { name: 'epg_extra_source', tab: 'lists', type: 'url', label: 'Guía extra (XMLTV)', advanced: true },
   { name: 'tv_source', tab: 'lists', type: 'url', label: 'Lista de televisión (TELEVISION.md)', advanced: true },
   { name: 'radio_source', tab: 'lists', type: 'url', label: 'Lista de radio (RADIO.md)', advanced: true },

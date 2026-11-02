@@ -189,6 +189,7 @@ FIELDS: tuple[Field, ...] = (
     Field("auto_check", "lists", "bool", False),
     Field("epg_enabled", "lists", "bool", True, affects=("epg",)),
     Field("epg_extra_enabled", "lists", "bool", False, affects=("epg",)),
+    Field("teletext_enabled", "lists", "bool", False, affects=("teletext",)),
     Field("epg_extra_source", "lists", "url", EPG_EXTRA_SOURCE, max_length=MAX_URL, affects=("epg",)),
     Field("tv_source", "lists", "url", TV_SOURCE, max_length=MAX_URL, affects=("feeds",)),
     Field("radio_source", "lists", "url", RADIO_SOURCE, max_length=MAX_URL, affects=("feeds",)),

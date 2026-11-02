@@ -17,6 +17,7 @@ from .scte_watch import ScteWatcher
 from .settings import BY_NAME, SettingsStore
 from .store import Store, channel_ok, source_ok
 from .stt import Transcriber
+from .teletext import Teletext
 from .u7d import U7d
 from .whisper_models import ModelDownloader
 
@@ -39,6 +40,7 @@ class App:
         self.assistant = Assistant(config, self.store)
         self.transcriber = Transcriber(config)
         self.models = ModelDownloader(config, self.net)
+        self.teletext = Teletext(config, self.net, self.store, self.epg)
         self.logos = LogoCache(self.store, self.net, config.data_dir / "logos")
 
     def start_background(self) -> None:
@@ -49,6 +51,7 @@ class App:
         threading.Thread(target=self.feeds.run, args=(self.stop, self._after_sync), daemon=True, name="feeds").start()
         threading.Thread(target=self.epg.run, args=(self.stop,), daemon=True, name="epg").start()
         threading.Thread(target=self.scte.run, args=(self.stop,), daemon=True, name="scte").start()
+        threading.Thread(target=self.teletext.run, args=(self.stop,), daemon=True, name="teletext").start()
 
     def _after_sync(self) -> None:
         if self.config.auto_check:  # read now, not at start-up: it can be changed in the settings
@@ -65,6 +68,8 @@ class App:
             self.feeds.refresh_soon()
         if "scte" in affected:
             self.scte.reconfigure()
+        if "teletext" in affected:
+            self.teletext.refresh_soon()
 
     def close(self) -> None:
         self.stop.set()
@@ -108,5 +113,6 @@ class App:
         meta["quit"] = self.config.allow_quit
         meta["stt"] = self.transcriber.available()
         meta["scte"] = self.config.scte_enabled
+        meta["teletext"] = self.config.teletext_enabled
         meta["ads"] = ads.payload(self.config)
         return {"meta": meta, "health": health, "channels": out}

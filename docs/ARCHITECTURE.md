@@ -41,6 +41,8 @@ navegador ──HTTP──▶ server.Handler ──▶ App ─┬─ Store      
 | `stt.py` | `Transcriber`, `Whisper` (cliente/lanzador), `PcmStream` y `Tap` |
 | `scte.py` | marcas de anuncios SCTE-35, funciones puras: decodificador de `splice_info_section`, etiquetas HLS, PID en MPEG-TS, `emsg` |
 | `scte_watch.py` | `ScteLog` (registro en `scte.jsonl`) y `ScteWatcher` (observa lo que pasa por el proxy y explora canales) |
+| `teletext.py` | el teletexto: páginas (formato `.tti`, juego nacional español) con titulares RSS, el tiempo y la guía; las reconstruye en segundo plano solo con `teletext_enabled` |
+| `teletext_routes.py` | rutas `/api/teletext*`: las revistas que pide la página, una vista de texto para scripts y la reconstrucción |
 | `scte_routes.py` | rutas `/api/scte*`: leer, exportar JSON/CSV, explorar ahora y vaciar |
 | `ads.py` | qué recibe la página para reaccionar a una pausa (`meta.ads`), el origen de la web que se muestra (`frame-src`) y si una web se deja incrustar |
 | `logos.py` | caché de logos con detección de tipo por firma |
@@ -82,6 +84,7 @@ clásico que define `Hls` antes.
   *host* con lo que necesita de la aplicación, así que no conoce el estado global.
 - `app.js` — controlador de la página (lista, panel, multivisión, subtítulos, datos y teclado).
 - `guide.js`, `assistant.js`, `dialogs.js` — la guía, el asistente y los diálogos.
+- `teletext.js` — el diálogo **Teletexto** (mando: página, subpáginas, teclas de color) y el pintado en un `<canvas>`; la decodificación del nivel 1 (colores, fondo, doble altura, mosaicos) es `lib/teletext.js`, pura y probada.
 - `scte.js` — el diálogo **Marcas** y el sondeo que avisa en pantalla de las marcas de anuncios nuevas (cada 2 s si hay
   una reacción configurada, cada 10 s si no).
 - La guía extra (`epg.py`: `sync_extra`, `extra_ids`): los canales propios con `epg` que ninguna guía de las listas cubre se leen

@@ -70,6 +70,9 @@ class Config:
     whisper_idle_minutes: int = 10  # a whisper-server we launched stops after this long without work
     whisper_autostart: bool = True  # launch our own whisper-server when none answers
 
+    # teletext (see teletext.py): downloads news feeds and the weather, so it is opt-in
+    teletext_enabled: bool = False
+
     # SCTE-35 / ad-break watcher (see scte_watch.py)
     scte_enabled: bool = False
     scte_scope: str = "viewing"  # "viewing" (what is being played), "list" (scte_channels) or "all"

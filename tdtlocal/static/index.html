@@ -67,6 +67,7 @@
         <button class="btn" id="btnSub" type="button" aria-pressed="false" hidden title="Subtítulos en directo de la casilla activa, con Whisper (U)">Subtítulos</button>
         <button class="btn" id="btnAlert" type="button" aria-pressed="false" hidden title="Avisarte cuando se diga una palabra en cualquier casilla">Alertas</button>
         <button class="btn" id="btnScte" type="button" hidden title="Marcas de anuncios (SCTE-35) detectadas en los canales">Marcas</button>
+        <button class="btn" id="btnTtx" type="button" hidden title="Teletexto: noticias, deportes, economía, el tiempo y la tele ahora (X)">Teletexto</button>
         <button class="btn" id="btnGuide" type="button" aria-pressed="false" title="Programación del canal activo">Guía</button>
         <button class="btn" id="btnSound" type="button" title="Igualar el volumen y ecualizador, para todos los canales o solo para este">Sonido</button>
         <button class="btn" id="btnFav" type="button" aria-pressed="false">Favorito</button>
@@ -125,6 +126,7 @@
           <dt>P</dt><dd>ventana flotante</dd>
           <dt>T</dt><dd>cambiar entre televisión y radio</dd>
           <dt>G</dt><dd>guía de programación del canal (Esc la cierra)</dd>
+          <dt>X</dt><dd>teletexto, si está activado en los ajustes (dentro: 3 cifras = página, R V A Z = rojo verde amarillo azul, ← → subpáginas, ↑ ↓ página, I = índice)</dd>
           <dt>U</dt><dd>subtítulos en directo (Whisper) de la casilla activa</dd>
           <dt>Ctrl + K</dt><dd>asistente de IA: preguntas y órdenes</dd>
           <dt>V</dt><dd>multivisión (4 canales)</dd>
@@ -250,6 +252,51 @@
       <button class="btn" type="button" id="alertCancel">Cancelar</button>
     </div>
   </form>
+</dialog>
+<dialog class="dlg dlg-wide ttx-dlg" id="ttxDlg" aria-labelledby="ttxTitle" tabindex="-1">
+  <h3 id="ttxTitle">Teletexto</h3>
+  <p class="dlg-hint" id="ttxStatus" role="status"></p>
+  <div class="ttx-body">
+    <canvas class="ttx-screen" id="ttxScreen" role="img" aria-label="Pantalla de teletexto"></canvas>
+    <div class="ttx-remote">
+      <form id="ttxForm" autocomplete="off">
+        <label>Página
+          <input id="ttxPage" type="text" inputmode="numeric" maxlength="3" pattern="[1-8][0-9]{2}" placeholder="100" aria-describedby="ttxMsg">
+        </label>
+        <button class="btn primary" type="submit">Ir</button>
+      </form>
+      <div class="seg" role="group" aria-label="Página anterior o siguiente">
+        <button type="button" id="ttxPrev" title="Página anterior (↓)">‹ Página</button>
+        <button type="button" id="ttxNext" title="Página siguiente (↑)">Página ›</button>
+      </div>
+      <div class="seg" role="group" aria-label="Subpáginas">
+        <button type="button" id="ttxPrevSub" title="Subpágina anterior (←)">‹</button>
+        <span class="ttx-sub" id="ttxSub" role="status"></span>
+        <button type="button" id="ttxNextSub" title="Subpágina siguiente (→)">›</button>
+      </div>
+      <div class="ttx-colours" role="group" aria-label="Teclas de color">
+        <button type="button" class="ttx-red" id="ttxRed" title="Rojo (R)"><span>Rojo</span><small></small></button>
+        <button type="button" class="ttx-green" id="ttxGreen" title="Verde (V)"><span>Verde</span><small></small></button>
+        <button type="button" class="ttx-yellow" id="ttxYellow" title="Amarillo (A)"><span>Amarillo</span><small></small></button>
+        <button type="button" class="ttx-blue" id="ttxBlue" title="Azul (Z)"><span>Azul</span><small></small></button>
+      </div>
+      <div class="ttx-links" role="group" aria-label="Secciones">
+        <button class="btn" type="button" id="ttxIndex" title="Índice (I)">Índice</button>
+        <button class="btn" type="button" data-ttx="101">Portada</button>
+        <button class="btn" type="button" data-ttx="200">Deportes</button>
+        <button class="btn" type="button" data-ttx="300">Economía</button>
+        <button class="btn" type="button" data-ttx="400">El tiempo</button>
+        <button class="btn" type="button" data-ttx="500">Televisión ahora</button>
+      </div>
+    </div>
+  </div>
+  <p class="dlg-msg" id="ttxMsg" role="status"></p>
+  <p class="dlg-hint">Las páginas se generan en tu equipo con los titulares públicos de EL PAÍS, EL MUNDO y Europa Press, el tiempo de
+    Open-Meteo y la guía de TDT local. Teclas: 3 cifras para ir a una página, R V A Z para los colores, I para el índice.</p>
+  <div class="dlg-actions">
+    <button class="btn" type="button" id="ttxRefresh">Actualizar páginas</button>
+    <button class="btn primary" type="button" id="ttxClose">Cerrar</button>
+  </div>
 </dialog>
 <script src="/vendor/hls.min.js"></script>
 <script type="module" src="/js/app.js"></script>

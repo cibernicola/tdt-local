@@ -6,6 +6,7 @@ import { initDialogs, removeOwn } from './dialogs.js';
 import { initSettings } from './settings.js';
 import { onWake } from './audio.js';
 import { initScte, openScte, syncScte } from './scte.js';
+import { initTeletext, syncTeletext, toggleTeletext } from './teletext.js';
 import { audioFx, initSound } from './sound.js';
 import { $, el, fillLogo } from './dom.js';
 import { matchingWords, ALERT_COOLDOWN_MS } from './lib/alerts.js';
@@ -625,6 +626,7 @@ async function load(force) {
   $('btnSub').hidden = $('btnAlert').hidden = !(d.meta && d.meta.stt);
   setAds(d.meta && d.meta.ads);
   syncScte(!!(d.meta && d.meta.scte), !!(d.meta && d.meta.ads));
+  syncTeletext(!!(d.meta && d.meta.teletext));
   $('hideDownWrap').hidden = !d.channels.some((c) => c.kind === state.kind && c.ok !== null);
   $('btnQuit').hidden = !(d.meta && d.meta.quit);
   if (d.meta && d.meta.version) $('aboutVersion').textContent = 'TDT local v' + d.meta.version;
@@ -826,6 +828,7 @@ function onKey(e) {
     case 'v': case 'V': setMode(multi ? 'single' : 'multi'); break;
     case 't': case 'T': setKind(state.kind === 'tv' ? 'radio' : 'tv'); break;
     case 'g': case 'G': toggleGuide(); break;
+    case 'x': case 'X': if (!$('btnTtx').hidden) toggleTeletext(); break;
     case 'u': case 'U': if (!$('btnSub').hidden) toggleSubs(); break;
     case 'c': case 'C': setPanel(appEl.classList.contains('collapsed')); break;
     case 'r': case 'R': if (multi) toggleRot(); break;
@@ -883,6 +886,7 @@ initScte({
   },
 });
 initSound({ apply: applyAudio });
+initTeletext();
 onWake(applyAudio); // the audio context starts with the first click or key: only then can a channel be routed through it
 initSettings({ reload: () => load(true), footMsg, openScte });
 applyLayout();
