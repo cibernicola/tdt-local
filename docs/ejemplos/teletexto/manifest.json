@@ -1,0 +1,21 @@
+{
+  "name": "Teletexto",
+  "version": "1.0.0",
+  "description": "Teletexto sobre el reproductor: titulares de EL PAÍS, EL MUNDO y Europa Press, el tiempo (Open-Meteo) y la tele ahora, con páginas, subpáginas y teclas de color.",
+  "author": "TDT local (ejemplo); decodificador y páginas adaptados del trabajo de Antonio Bueno Martín",
+  "homepage": "https://github.com/cibernicola/tdt-local",
+  "tdt": {
+    "api": 1,
+    "label": "Teletexto",
+    "panel": { "placement": "screen" },
+    "permissions": [
+      "channels.read",
+      "epg.read",
+      "storage",
+      "network:feeds.elpais.com",
+      "network:e00-elmundo.uecdn.es",
+      "network:www.europapress.es",
+      "network:api.open-meteo.com"
+    ]
+  }
+}

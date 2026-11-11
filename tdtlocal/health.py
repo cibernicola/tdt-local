@@ -38,7 +38,7 @@ class HealthChecker:
         with self.net.open(url, require_allowed=False, timeout=PROBE_TIMEOUT) as response:
             body = response.read(MAX_PLAYLIST)
             final = response.geturl()
-        text = body.decode("utf-8", "replace").lstrip("﻿ \r\n\t")
+        text = body.decode("utf-8", "replace").lstrip("\ufeff \r\n\t")
         if not text.startswith("#EXTM3U"):
             raise ValueError("no es una lista m3u8")
         return [line.strip() for line in text.splitlines() if line.strip()], final

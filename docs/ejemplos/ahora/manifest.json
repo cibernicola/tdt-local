@@ -1,0 +1,13 @@
+{
+  "name": "Ahora en pantalla",
+  "version": "1.0.0",
+  "description": "Un panel con lo que estás viendo, qué dan ahora y después, y botones de volumen. Ejemplo de plugin con permisos.",
+  "author": "TDT local (ejemplo)",
+  "tdt": {
+    "api": 1,
+    "entry": "index.html",
+    "label": "Ahora",
+    "panel": { "width": 320, "height": 200 },
+    "permissions": ["player.read", "player.control", "epg.read", "storage"]
+  }
+}

@@ -5,9 +5,11 @@ import { el, fillLogo } from './dom.js';
 import { audioTarget, audioTouched } from './lib/adbreak.js';
 import { chainFor } from './audio.js';
 import { ATRES_ORIGIN, ContentClock, audioMessage, fxMessage, parseBridge } from './lib/bridge.js';
+import { createOverlays } from './lib/overlays.js';
 import { buildPlan, originNote, usesHls } from './lib/plan.js';
 import { atresEmbed } from './lib/embeds.js';
 import { ytEmbed } from './lib/youtube.js';
+import { pluginEmbed } from './sources.js';
 import { parseU7d } from './lib/u7d.js';
 
 const ATTEMPT_TIMEOUT_MS = 15000;
@@ -36,6 +38,7 @@ const BRIDGE_WAIT_MS = 6000; // how long to wait for the bridge script before sa
  * @property {(tile: Tile, on: boolean, contentSeconds: number) => void} adExternal - the player inside the tile says an ad
  *   break starts or ends (and how long it had been showing programme)
  * @property {(c: object | null) => ({level: object, eq: object} | null)} audioFx - leveler and equalizer settings of a channel
+ * @property {{list: () => {id: string, entry: object}[], watch: (fn: () => void) => void}} overlays - the layers plugins put over the picture (lib/overlays.js)
  */
 
 export class Tile {
@@ -113,7 +116,16 @@ export class Tile {
     this.track = null;
     this.subEl = el('div', 'tile-sub');
     this.subEl.hidden = true;
-    root.append(video, cover, el('div', 'tile-hit'), this.subEl, bar, this.noticeEl, el('div', 'tile-prog'));
+    // the layers plugins put over the picture (slot «tile.overlay», lib/overlays.js): a box that covers the tile and lets every click through
+    this.overlayBox = el('div', 'tile-overlays');
+    root.append(video, cover, el('div', 'tile-hit'), this.subEl, bar, this.noticeEl, el('div', 'tile-prog'), this.overlayBox);
+    this.overlays = createOverlays({
+      list: () => host.overlays.list(),
+      container: this.overlayBox,
+      context: () => this.overlayContext(),
+      onError: (id, error) => console.warn('[TDT] capa «' + id + '»: ' + (error && error.message ? error.message : error)),
+    });
+    host.overlays.watch(() => this.overlays.refresh());
 
     root.addEventListener('click', (e) => {
       if (host.mode() === 'multi' && !e.target.closest('button, a')) host.requestFocus(i);
@@ -134,6 +146,15 @@ export class Tile {
       if (audioTouched(now, this.audioWanted())) host.adVolume(this, now);
     });
   }
+
+  /** What a layer is told about this tile (lib/overlays.js). */
+  overlayContext() {
+    const c = this.c;
+    return { tile: { index: this.i, focus: this.i === this.host.focus(), channel: c ? { id: String(c.id), name: String(c.name || ''), kind: c.kind || 'tv' } : null }, mode: this.host.mode() };
+  }
+
+  /** Something about this tile changed (the channel, the focus, the view): the layers are asked again and told. */
+  refreshOverlays() { if (this.overlays) this.overlays.refresh(); }
 
   audioWanted() {
     return audioTarget(this.host.volume(), this.duck, this.i === this.host.focus());
@@ -315,7 +336,7 @@ export class Tile {
   // YouTube's API without loading its script: commands over postMessage (the iframe has enablejsapi=1)
   ytCmd(func) {
     try {
-      this.frame.contentWindow.postMessage(JSON.stringify({ event: 'command', func, args: '' }), 'https://www.youtube-nocookie.com');
+      this.frame.contentWindow.postMessage(JSON.stringify({ event: 'command', func, args: '' }), this.ytOrigin || 'https://www.youtube-nocookie.com');
     } catch { /* the player has not loaded yet */ }
   }
 
@@ -323,6 +344,7 @@ export class Tile {
   setInfo(text) {
     this.info = text;
     if (this.i === this.host.focus()) this.host.deckChanged();
+    this.refreshOverlays(); // the channel or the state of the tile changed
   }
 
   showNotice(text, actions) {
@@ -400,6 +422,7 @@ export class Tile {
     this.stop();
     this.c = null;
     this.showEmpty();
+    this.refreshOverlays();
   }
 
   play(c, onlyUrl) {
@@ -475,7 +498,7 @@ export class Tile {
     // everything goes through the local proxy: streams almost never send CORS headers
     this.tag = 's' + Math.random().toString(36).slice(2, 10);
     if (this.stt) this.sttRegister();
-    const url = '/proxy?u=' + encodeURIComponent(step.u) + (c.custom ? '&c=' + encodeURIComponent(c.id) : '') + '&s=' + this.tag;
+    const url = '/proxy?u=' + encodeURIComponent(step.u) + (c.custom || c.hdr ? '&c=' + encodeURIComponent(c.id) : '') + '&s=' + this.tag;
 
     const fail = () => {
       if (s.ok || token !== this.token) return;
@@ -510,6 +533,7 @@ export class Tile {
 
     const embed = ytEmbed(step.u);
     const atres = atresEmbed(step.u);
+    const viaPlugin = !embed && !atres ? pluginEmbed(step.u) : null; // a player a plugin knows how to show (tdt.sources)
     const u7d = parseU7d(step.u);
     if (u7d) {
       this.attachU7d(u7d, s, { fail, success, lost, startPlay });
@@ -517,6 +541,8 @@ export class Tile {
       this.attachYoutube(c, embed, success);
     } else if (atres) {
       this.attachAtres(c, atres, success);
+    } else if (viaPlugin) {
+      this.attachSourceFrame(c, viaPlugin, success);
     } else if (typeof Hls !== 'undefined' && Hls.isSupported() && usesHls(c, step)) {
       this.attachHls(url, s, { fail, success, lost, startPlay });
     } else {
@@ -551,10 +577,34 @@ export class Tile {
     });
     this.frame = f;
     this.frameKind = 'youtube';
+    this.ytOrigin = new URL(embed).origin; // the commands only go to the server of the player
     this.root.classList.add('yt');
     this.root.insertBefore(f, this.cover);
     f.src = embed + (embed.includes('?') ? '&' : '?') + 'autoplay=1&mute=1&playsinline=1&rel=0&enablejsapi=1&origin='
       + encodeURIComponent(location.origin);
+  }
+
+  // A player a plugin added (tdt.sources): its own page in a frame, like YouTube's, with its controls, sound and notices. This page runs none of
+  // its code; what it can show is the servers the user approved with «embed:server».
+  attachSourceFrame(c, source, success) {
+    // a source can ask for an adapter the core knows (lib/sources.js CONTROLS): then its sound is driven like that of the built-in player
+    if (source.control === 'youtube') { this.attachYoutube(c, source.embed, success); return; }
+    if (source.control === 'atres') { this.attachAtres(c, source.embed, success); return; }
+    const f = el('iframe', 'tile-yt');
+    f.title = c.name;
+    f.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+    f.setAttribute('allowfullscreen', '');
+    f.referrerPolicy = 'strict-origin-when-cross-origin';
+    f.addEventListener('load', () => {
+      success();
+      // these players do not start by themselves inside a frame of another page: one click on their play button, which is theirs
+      this.setInfo('Reproductor de ' + source.name + ' (plugin) · si no arranca, pulsa su botón de play' + (this.host.mode() === 'multi' ? ' · su sonido es suyo: en multivisión suenan juntos' : ''));
+    });
+    this.frame = f;
+    this.frameKind = 'plugin';
+    this.root.classList.add('yt');
+    this.root.insertBefore(f, this.cover);
+    f.src = source.embed;
   }
 
   // Atresplayer's embeddable player: it has its own controls, cookie notice and sound, which this page cannot change

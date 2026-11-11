@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Ahora en pantalla</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <p class="label">Estás viendo</p>
+  <h1 id="canal">…</h1>
+  <p id="ahora" class="programa"></p>
+  <p id="despues" class="programa suave"></p>
+  <div class="botones">
+    <button id="menos" type="button" title="Bajar el volumen">−</button>
+    <button id="silencio" type="button" aria-pressed="false">Silenciar</button>
+    <button id="mas" type="button" title="Subir el volumen">+</button>
+  </div>
+  <p id="veces" class="pie"></p>
+  <script src="/@tdt/sdk.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

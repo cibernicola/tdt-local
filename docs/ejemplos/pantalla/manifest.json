@@ -1,0 +1,12 @@
+{
+  "name": "Pantalla de texto",
+  "version": "1.0.0",
+  "description": "Una pantalla estilo teletexto sobre el reproductor: lo que ves, qué dan ahora y después, y canales a un número. Ejemplo de plugin que ocupa la pantalla.",
+  "author": "TDT local (ejemplo)",
+  "tdt": {
+    "api": 1,
+    "label": "Texto",
+    "panel": { "placement": "screen" },
+    "permissions": ["player.read", "player.control", "channels.read", "epg.read"]
+  }
+}

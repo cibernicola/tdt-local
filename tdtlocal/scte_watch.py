@@ -24,6 +24,7 @@ from typing import Any
 from .config import Config
 from .custom import is_youtube
 from .health import HLS_URL
+from .hooks import Hooks
 from .net import Net
 from .scte import Marker, scan_playlist, segment_markers, strip_query
 from .store import Store, source_ok
@@ -166,10 +167,13 @@ class ScteLog:
 class ScteWatcher:
     """Finds the markers, deduplicates them and writes them to the log."""
 
-    def __init__(self, config: Config, store: Store, net: Net, path: Path | None = None) -> None:
+    def __init__(
+        self, config: Config, store: Store, net: Net, path: Path | None = None, hooks: Hooks | None = None
+    ) -> None:
         self.config = config
         self.store = store
         self.net = net
+        self.hooks = hooks  # a marker found is told as the action «ad.marker»
         self.log = ScteLog(path or config.data_dir / "scte.jsonl", config.scte_keep)
         self._seen: dict[str, float] = {}  # dedupe key -> when it was last reported
         self._breaks: dict[str, float] = {}  # channel id -> until when an ad break announced for it is under way
@@ -344,7 +348,9 @@ class ScteWatcher:
             for extra in ("seg", "lead", "duration", "elapsed"):  # where in the stream and how long: for reactions
                 if extra in marker:
                     event[extra] = marker[extra]
-            self.log.add(event)
+            added = self.log.add(event)
+            if self.hooks is not None:
+                self.hooks.do("ad.marker", added)
             log.info("marca de anuncios en %s: %s %s", name, marker["kind"], marker["detail"])
         return len(fresh)
 
@@ -383,15 +389,15 @@ class ScteWatcher:
         with self.net.open(url, headers, False, PROBE_TIMEOUT) as response:
             body = response.read(MAX_PLAYLIST)
             final = response.geturl()
-        text = body.decode("utf-8", "replace").lstrip("﻿ \r\n\t")
+        text = body.decode("utf-8", "replace").lstrip("\ufeff \r\n\t")
         if not text.startswith("#EXTM3U"):
             raise ValueError("no es una lista m3u8")
         return text, final
 
     def _probe(self, target: dict[str, Any]) -> list[Marker]:
         """Markers in the playlist (and its first variant) of one stream, and in a segment if asked to."""
-        headers = target["headers"]
-        text, base = self._read_playlist(target["url"], headers)
+        tag = target["id"]
+        text, base = self._read_playlist(target["url"], self.store.headers_for(tag, target["url"]))
         markers = scan_playlist(text)
         if "#EXT-X-STREAM-INF" in text:
             lines = text.splitlines()
@@ -401,12 +407,14 @@ class ScteWatcher:
             )
             if not variant:
                 raise ValueError("lista maestra sin variantes")
-            text, base = self._read_playlist(urllib.parse.urljoin(base, variant), headers)
+            variant_url = urllib.parse.urljoin(base, variant)
+            text, base = self._read_playlist(variant_url, self.store.headers_for(tag, variant_url))
             markers += scan_playlist(text)
         if self.config.scte_inspect_segments:
             segments = [line.strip() for line in text.splitlines() if line.strip() and not line.startswith("#")]
             if segments:
-                markers += self._inspect_segment(urllib.parse.urljoin(base, segments[-1]), headers)
+                segment_url = urllib.parse.urljoin(base, segments[-1])
+                markers += self._inspect_segment(segment_url, self.store.headers_for(tag, segment_url))
         return markers
 
     def _inspect_segment(self, url: str, headers: dict[str, str]) -> list[Marker]:

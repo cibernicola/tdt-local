@@ -3,6 +3,15 @@ import { adsEvents, adsExternal, adsTuned, adsUserVolume, fragSeen, initAds, set
 import { api, postJson } from './api.js';
 import { initAssistant, isAssistantOpen, toggleAssist } from './assistant.js';
 import { initDialogs, removeOwn } from './dialogs.js';
+import { initHeaders } from './headers.js';
+import { loadIncluded, startPluginHost } from './core-plugins.js';
+import { initEvents } from './events.js';
+import { hooks } from './hooks.js';
+import { initRules } from './rules.js';
+import { initControl } from './control.js';
+import { initDevBanner } from './dev-banner.js';
+import { initSafeBanner } from './safe-banner.js';
+import { initPluginHost } from './plugin-host.js';
 import { initSettings } from './settings.js';
 import { onWake } from './audio.js';
 import { initScte, openScte, syncScte } from './scte.js';
@@ -21,6 +30,7 @@ import { fillAssignments, nextRotation } from './lib/mosaic.js';
 import { canPlayFormat } from './lib/plan.js';
 import { atresEmbed } from './lib/embeds.js';
 import { ytEmbed } from './lib/youtube.js';
+import { pluginSourceName } from './sources.js';
 import { isGuideOpen, syncGuide, toggleGuide } from './guide.js';
 import { store } from './store.js';
 import { TILES, channelEpgLine, cur, epgEntries, focusTile, nowTs, state } from './state.js';
@@ -96,7 +106,7 @@ function makeRow(c, i) {
   b.append(logo);
   const txt = el('span', 'txt');
   txt.append(el('span', 'name', c.name));
-  const embedName = (u) => (ytEmbed(u) ? 'YouTube' : atresEmbed(u) ? 'Atresplayer' : '');
+  const embedName = (u) => (ytEmbed(u) ? 'YouTube' : atresEmbed(u) ? 'Atresplayer' : pluginSourceName(u));
   const embedOnly = c.sources.length && c.sources.every((s) => embedName(s.u)) ? embedName(c.sources[0].u) : '';
   const sub = [c.group || (state.cat ? '' : c.category), c.sources.length ? '' : 'solo web', embedOnly]
     .filter(Boolean).join(' · ');
@@ -284,6 +294,7 @@ function updateDeck() {
   syncStt();
   $('btnPip').disabled = !!t.frame; // YouTube lives in an iframe: no picture-in-picture of our own
   $('btnDel').hidden = !(c && c.custom);
+  $('btnHdr').hidden = !(c && c.kind !== 'u7d');
   const fav = $('btnFav');
   fav.disabled = !c;
   fav.setAttribute('aria-pressed', c && state.favs.has(c.id) ? 'true' : 'false');
@@ -387,9 +398,17 @@ function applyLayout() {
     t.root.classList.toggle('main', t.i === state.focus);
     t.root.classList.toggle('parked', t === parkedTile);
   });
+  state.tiles.forEach((t) => t.refreshOverlays()); // which tile has the sound, single or multi view
 }
 
 function applyAudio() { state.tiles.forEach((t) => t.syncAudio()); }
+
+// what an AI or a plugin asks through the control bus: the same as the keyboard does
+function controlVolume(v, m) {
+  state.vol = { v, m };
+  store.set('vol', state.vol);
+  applyAudio();
+}
 
 function syncMultiUi() {
   const on = (b, v) => $(b).setAttribute('aria-pressed', v ? 'true' : 'false');
@@ -854,6 +873,7 @@ const host = {
   adVolume: adsUserVolume,
   adExternal: adsExternal,
   audioFx,
+  overlays: { list: () => hooks.list('tile.overlay'), watch: (fn) => hooks.watch('tile.overlay', fn) }, // the layers plugins put over the picture
 };
 
 for (let i = 0; i < TILES; i++) state.tiles.push(new Tile(i, host));
@@ -865,6 +885,9 @@ initDialogs({
   clearChannel: (c) => state.tiles.forEach((t) => { if (t.c && t.c.id === c.id) t.clear(); }),
   loadEpg,
 });
+initHeaders({ load, play, footMsg });
+loadIncluded(); // the plugins that come with the application (the reaction to an ad break among them), before anything uses their hooks
+startPluginHost(); // and, in the desktop app, the plugins without isolation the preload has for this page (they get the same hooks)
 initAds({
   focusTile,
   channels: () => state.channels,
@@ -874,7 +897,7 @@ initAds({
   park,
   unpark,
   say: (text) => osd('📢', text),
-});
+}, hooks);
 initScte({
   react: adsEvents,
   notify(name, text, count) {
@@ -885,6 +908,14 @@ initScte({
 initSound({ apply: applyAudio });
 onWake(applyAudio); // the audio context starts with the first click or key: only then can a channel be routed through it
 initSettings({ reload: () => load(true), footMsg, openScte });
+initDevBanner();
+initSafeBanner();
+initEvents();
+window.addEventListener('tdt-channels-changed', () => load(true)); // a plugin added or removed channels
+window.addEventListener('tdt-guide-changed', () => loadEpg()); // a plugin gave a guide or took it away
+const pluginHost = initPluginHost({ actions: { setKind, play, multiWith, setVolume: controlVolume } });
+initControl({ setKind, play, multiWith, setVolume: controlVolume }, pluginHost);
+initRules({ actions: { setKind, play, multiWith, setVolume: controlVolume }, footMsg });
 applyLayout();
 syncMultiUi();
 syncKind();

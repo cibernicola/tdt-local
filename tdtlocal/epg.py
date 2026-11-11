@@ -60,6 +60,8 @@ def parse_xmltv(data: bytes, now: float | None = None, only: set[str] | None = N
     """
     if b"<!entity" in data.lower():
         raise ValueError("XML con entidades: rechazado")
+    if b"\x00" in data[:512]:  # UTF-16 or UTF-32: the check above could not see an entity declaration written in them
+        raise ValueError("XML que no está en UTF-8: rechazado")
     now = time.time() if now is None else now
     out: dict[str, list[Programme]] = {}
     if only is None:
@@ -236,12 +238,13 @@ class EpgSyncer:
                     store.epg["tv"].get(epg_id)
                     or store.epg["radio"].get(epg_id)
                     or store.epg["extra"].get(epg_id)
+                    or store.plugin_guide().get(epg_id)
                     or []
                 )
                 return {"id": epg_id, "programmes": [p for p in items if p[1] > now][:40]}
             upcoming: dict[str, list[Programme]] = {}
-            for kind in ("tv", "radio", "extra"):
-                for key, programmes in store.epg[kind].items():
+            for guide in (store.epg["tv"], store.epg["radio"], store.epg["extra"], store.plugin_guide()):
+                for key, programmes in guide.items():
                     head = [p[:3] for p in programmes if p[1] > now][:3]
                     if head:
                         upcoming[key] = head

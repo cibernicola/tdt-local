@@ -1,8 +1,9 @@
-// While an ad break is on (SCTE-35), do what the user chose: mute or lower the sound, switch channel, show a web.
-// What to do with each marker is decided in lib/adbreak.js; this file keeps the one break under way and its timers.
+// While an ad break is on (SCTE-35), react to it. This file is the engine: it finds out when a break starts and ends, keeps the one under way and its
+// timers, and tells the hooks. WHAT is done during a break is not here: the filter «ad.reaction» says it (a list of steps, by default the user's choices
+// in the settings) and each step is an action of the registry «ad.actions». Those, and the defaults, are in the included plugin «ads»
+// (tdtlocal/static/plugins/ads/page.js), which any other plugin can add to, change or replace. What to do with each marker is in lib/adbreak.js.
 import {
-  END_MARGIN, PREROLL_CONTENT_SECONDS, STALE_SECONDS, altChannel, duckedGain, reactionTo, remainingOf, segmentStart, startText, untilMarker,
-  waitFor,
+  END_MARGIN, PREROLL_CONTENT_SECONDS, STALE_SECONDS, reactionTo, remainingOf, segmentStart, untilMarker, waitFor,
 } from './lib/adbreak.js';
 
 const WAIT_FOR_SEGMENT_S = 20; // the most to wait for the player to ask for the segment a marker belongs to
@@ -23,15 +24,54 @@ const WAIT_FOR_SEGMENT_S = 20; // the most to wait for the player to ask for the
 
 /** @type {AdsHost | null} */
 let host = null;
+/** @type {Pick<ReturnType<import('./lib/hooks.js').createHooks>, 'apply' | 'do' | 'get'> | null} */
+let hooks = null;
 let cfg = null; // the settings the server sent (`meta.ads`), or null when there is nothing to react with
 let current = null; // the break under way
 const waiting = new Set(); // markers whose segment the player has not asked for yet
 const scheduled = new Set(); // markers with a timer set
 
-/** @param {AdsHost} appHost */
-export function initAds(appHost) {
+/** @param {AdsHost} appHost @param {typeof hooks} hookApi */
+export function initAds(appHost, hookApi) {
   host = appHost;
+  hooks = hookApi;
 }
+
+/**
+ * What a step of the reaction is given (`ctx`), and what it may leave there for the engine:
+ * `tile`, `channel`, `ev`, `behind`, `external`, `soft`, `replay`, `cfg` (the settings when the break began), `settings()` (the settings now), `host`, `b` (the
+ * break under way: `b.audioTouched` tells that the user changed the audio, `b.park` where the original went). A step may set `ctx.blind` (the original
+ * can no longer be watched, so nothing will tell that the break is over) and `ctx.altName` (the other channel, for the notice).
+ * A step returns nothing, or `{lift(quiet), settle()}`: `lift` undoes what it did (`quiet`: the user took over), `settle` is for what is put right
+ * afterwards, only when the user did not take over.
+ * @typedef {object} AdStep
+ */
+
+const warn = (what, error) => console.warn('[TDT] publicidad: ' + what + ':', error && error.message ? error.message : error);
+
+/** Run the steps of the reaction in order; each one that works leaves its way back. A step that fails is skipped. */
+function react(ctx) {
+  const plan = hooks.apply('ad.reaction', [], ctx);
+  const steps = [];
+  for (const step of Array.isArray(plan) ? plan : []) {
+    const action = step && hooks.get('ad.actions', step.do);
+    if (!action || typeof action.run !== 'function') {
+      warn('no hay una acción «' + (step && step.do) + '»', '');
+      continue;
+    }
+    try {
+      const done = action.run(ctx, step);
+      if (done) steps.push(done);
+    } catch (error) {
+      warn('la acción «' + step.do + '» falló', error);
+    }
+  }
+  return steps;
+}
+
+const call = (fn, what, ...args) => {
+  try { if (typeof fn === 'function') fn(...args); } catch (error) { warn(what, error); }
+};
 
 /** The settings changed (or arrived). `null` switches the reaction off, putting back what it had changed. */
 export function setAds(config) {
@@ -138,32 +178,20 @@ function begin(tile, ev, behind, external = false, soft = false) {
   const channel = tile.c;
   const b = {
     tile, channel, channelId: channel.id, before: { ...host.volume() }, audioTouched: false, tuned: false, timer: 0, external,
-    park: null,
+    park: null, steps: [],
   };
   current = b;
-  if (cfg.flag) tile.setAdFlag(true);
-  if (cfg.audio === 'mute') tile.setDuck({ muted: true });
-  else if (cfg.audio === 'lower') tile.setDuck({ gain: duckedGain(cfg.lower_percent) });
-  let altName = '';
   // right after going back to a channel by loading it again, its player starts with an ad of its own: not a new break
-  const replay = external && returned && returned.channelId === channel.id && Date.now() - returned.at < REPLAY_GRACE_S * 1000;
-  if (cfg.screen === 'channel' && !replay && !soft) {
-    const alt = altChannel(host.channels(), cfg.channel);
-    if (alt && alt.id !== channel.id) {
-      altName = alt.name;
-      // single view: the original keeps playing in the background, so it still tells when the break is over and does
-      // not have to be loaded again (that would start with another ad); multi-view: the tile itself is switched
-      b.park = host.park(tile, alt);
-      if (!b.park) host.tune(alt);
-    }
-  } else if (cfg.screen === 'web' && !soft) {
-    tile.showAdFrame(cfg.web_url);
-  }
+  const replay = !!(external && returned && returned.channelId === channel.id && Date.now() - returned.at < REPLAY_GRACE_S * 1000);
+  const ctx = { tile, channel, ev, behind, external, soft, replay, cfg, settings: () => cfg, host, b, blind: false, altName: '' };
+  b.steps = react(ctx);
   // when the original cannot be watched any more, nothing tells that the break is over: the assumed length rules
-  const blind = !!altName && !b.park;
-  const left = external && !blind ? EXTERNAL_LIMIT_S : Math.max(0, remainingOf(ev, cfg).seconds - behind);
+  const left = external && !ctx.blind ? EXTERNAL_LIMIT_S : Math.max(0, remainingOf(ev, cfg).seconds - behind);
   b.timer = setTimeout(() => finish(false), (left + (external ? 0 : END_MARGIN)) * 1000);
-  host.say(soft ? startText({ ...cfg, screen: 'keep' }, '') + ' (poco programa antes: no se cambia de canal)' : startText(cfg, altName));
+  hooks.do('ad.started', {
+    channel: String(channel.id), name: String(channel.name || ''), origin: external ? 'player' : 'scte', soft, seconds: Math.round(left),
+    known: external ? false : remainingOf(ev, cfg).known,
+  });
 }
 
 /**
@@ -176,18 +204,17 @@ function finish(quiet) {
   current = null;
   clearTimeout(b.timer);
   for (const item of [...scheduled]) if (item.kind === 'end') drop(item);
-  b.tile.setDuck(null);
-  b.tile.hideAdFrame();
-  b.tile.setAdFlag(false);
-  if (b.park) host.unpark(b.park, b.tile, quiet);
-  if (quiet) return;
-  if (b.audioTouched && cfg && cfg.on_touch === 'restore') host.setVolume(b.before);
+  for (const step of b.steps) call(step.lift, 'deshacer un paso falló', quiet);
+  const ended = () => hooks.do('ad.ended', { channel: String(b.channelId), name: String(b.channel.name || ''), quiet });
+  if (quiet) { ended(); return; }
+  for (const step of b.steps) call(step.settle, 'rematar un paso falló');
   const tile = b.tile;
   if (!b.park && tile === host.focusTile() && tile.c && tile.c.id !== b.channelId) {
     returned = { channelId: b.channelId, at: Date.now() };
     host.tune(b.channel);
   }
   host.say('Fin de la pausa de anuncios');
+  ended();
 }
 
 /** The user changed the volume of the active tile while the reaction held its own: their value wins, now. */

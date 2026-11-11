@@ -1,0 +1,11 @@
+/* Sin fondo propio: el panel de TDT local ya lo pone, claro u oscuro. */
+:root { color-scheme: light dark; }
+body { margin: 0; padding: 10px 12px; font: 14px/1.4 system-ui, sans-serif; color: CanvasText; background: transparent; }
+h1 { margin: 0 0 6px; font-size: 20px; }
+.label, .pie { margin: 0; font-size: 11px; opacity: .65; text-transform: uppercase; letter-spacing: .04em; }
+.pie { text-transform: none; margin-top: 8px; }
+.programa { margin: 2px 0; }
+.suave { opacity: .7; }
+.botones { display: flex; gap: 6px; margin-top: 10px; }
+button { font: inherit; padding: 3px 12px; cursor: pointer; border-radius: 6px; border: 1px solid GrayText; background: ButtonFace; color: ButtonText; }
+button[aria-pressed="true"] { outline: 2px solid Highlight; }

@@ -1,10 +1,10 @@
 // The helpers that package the desktop app (desktop/lib/pack.js). Nothing is packaged here.
 import assert from 'node:assert/strict';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, readlinkSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
-import { KEPT_LOCALES, iconFor, localesToRemove, pluginDirs, readVersion, stageExtras, trimLocales, versionFrom } from '../../desktop/lib/pack.js';
+import { KEPT_LOCALES, iconFor, localesToRemove, pluginDirs, readVersion, stageExtras, strayLinks, trimLocales, versionFrom } from '../../desktop/lib/pack.js';
 
 const REPO = new URL('../../', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1');
 const SERVER = process.platform === 'win32' ? 'tdt-local-server.exe' : 'tdt-local-server';
@@ -73,4 +73,32 @@ test('the executable icon is the .ico or .icns of packaging/icons, and none on L
   assert.ok(existsSync(iconFor('win32', REPO) + '.ico'));
   assert.ok(existsSync(iconFor('darwin', REPO) + '.icns'));
   assert.equal(iconFor('linux', REPO), undefined);
+});
+
+test('the relative links of the frozen server arrive as relative links, and a link that would break stops the package', (t) => {
+  const { root, done } = temp();
+  try {
+    const server = join(root, 'frozen');
+    mkdirSync(join(server, '_internal', 'Python.framework', 'Versions', '3.12'), { recursive: true });
+    writeFileSync(join(server, SERVER), 'binary');
+    writeFileSync(join(server, '_internal', 'Python.framework', 'Versions', '3.12', 'Python'), 'lib');
+    try {
+      symlinkSync(join('Python.framework', 'Versions', '3.12', 'Python'), join(server, '_internal', 'Python'));
+    } catch {
+      t.skip('this system does not allow symbolic links');
+      return;
+    }
+    const stage = join(root, 'stage');
+    stageExtras({ repoRoot: REPO, serverDir: server, stageDir: stage });
+    const link = join(stage, 'server', '_internal', 'Python');
+    assert.equal(readlinkSync(link), join('Python.framework', 'Versions', '3.12', 'Python'), 'still the relative text, not a path of this machine');
+    assert.deepEqual(strayLinks(join(stage, 'server')), []);
+    // one that points at the machine that built it, or out of the folder
+    symlinkSync(join(root, 'frozen', 'tdt-local-server'), join(server, '_internal', 'absoluto'));
+    symlinkSync(join('..', '..', 'fuera'), join(server, '_internal', 'sale'));
+    assert.deepEqual(strayLinks(server).map((l) => l.link).sort(), [join('_internal', 'absoluto'), join('_internal', 'sale')]);
+    assert.throws(() => stageExtras({ repoRoot: REPO, serverDir: server, stageDir: stage }), /enlaces que no valdrían/);
+  } finally {
+    done();
+  }
 });

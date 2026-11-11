@@ -1,0 +1,439 @@
+{
+  "api": "1.0",
+  "about": "La especificación única de la API de los plugins con permisos. La leen la página (permisos y argumentos de cada método), el servidor MCP (la guía y la consulta), la documentación y las pruebas, que comprueban que el SDK, esta tabla y las guías dicen lo mismo. Si se añade o cambia un método, se cambia aquí primero.",
+  "permissions": {
+    "player.read": {
+      "risk": "medium",
+      "text": "ver qué estás viendo: la lista, el canal de cada casilla, el volumen y el modo"
+    },
+    "player.control": {
+      "risk": "high",
+      "text": "cambiar lo que ves: poner canales, cambiar de lista, el volumen, el silencio y la multivisión"
+    },
+    "channels.read": {
+      "risk": "medium",
+      "text": "buscar en la lista de canales y emisoras"
+    },
+    "epg.read": {
+      "risk": "medium",
+      "text": "leer la guía de programación"
+    },
+    "ui.toast": {
+      "risk": "low",
+      "text": "mostrar avisos breves sobre la imagen"
+    },
+    "storage": {
+      "risk": "low",
+      "text": "guardar sus propios datos en tu equipo (hasta 256 KB)"
+    },
+    "network:<servidor>": {
+      "risk": "high",
+      "text": "hablar con ese servidor (solo por https)",
+      "pattern": "network:api.ejemplo.com | network:*.ejemplo.com"
+    },
+    "embed:<servidor>": {
+      "risk": "critical",
+      "text": "mostrar dentro de una casilla el reproductor de ese servidor: una página suya, con sus propios scripts, corre en tu ventana",
+      "pattern": "embed:player.ejemplo.tv"
+    },
+    "provide:channels": {
+      "risk": "high",
+      "text": "añadir canales a tu lista (hasta 500): los enlaces que traiga se podrán abrir desde tu equipo, como los que añades tú"
+    },
+    "provide:epg": {
+      "risk": "medium",
+      "text": "poner programas en la guía de los canales que ella misma aporta (títulos y horas que luego ves en la lista)"
+    }
+  },
+  "errors": {
+    "E_PERMISSION": "el plugin no tiene el permiso que hace falta (no lo declaró o el usuario lo quitó)",
+    "E_INVALID": "un argumento no es válido",
+    "E_NOT_FOUND": "lo que se pide no existe (un canal, una clave)",
+    "E_UNSUPPORTED": "el método no existe en esta versión de la API",
+    "E_UNAVAILABLE": "no se puede hacer ahora (sin red, el servidor no contesta, la aplicación no ha respondido)",
+    "E_RATE": "demasiadas llamadas seguidas: espera un poco",
+    "E_QUOTA": "se pasó de un límite (el almacenamiento, el tamaño de una respuesta)"
+  },
+  "limits": {
+    "rate": {
+      "capacity": 200,
+      "perSecond": 100,
+      "about": "llamadas por plugin: una ráfaga de 200 y 100 por segundo"
+    },
+    "message": "los textos tienen un máximo (se indica en cada argumento)",
+    "storage": {
+      "key": "letras, números, punto, guion y guion bajo, hasta 64",
+      "valueBytes": 65536,
+      "totalBytes": 262144,
+      "keys": 200
+    },
+    "fetch": {
+      "concurrent": 4,
+      "redirects": 3,
+      "bodyInBytes": 100000,
+      "bodyOutBytes": 1000000,
+      "timeoutSeconds": 15,
+      "headers": [
+        "accept",
+        "accept-language",
+        "content-type"
+      ]
+    },
+    "panel": {
+      "minWidth": 240,
+      "maxWidth": 800,
+      "minHeight": 160,
+      "maxHeight": 800
+    },
+    "toast": {
+      "maxChars": 160,
+      "seconds": 4
+    }
+  },
+  "events": {
+    "player": {
+      "permission": "player.read",
+      "since": "1.0",
+      "doc": "Llama a tu función con la foto del estado cuando algo cambia (como mucho una vez por segundo)."
+    },
+    "channel.changed": {
+      "permission": "player.read",
+      "since": "1.1",
+      "doc": "Se ha puesto otro canal: {id, name, kind}. Si lo hizo una regla, trae cause: «rule»."
+    },
+    "kind.changed": {
+      "permission": "player.read",
+      "since": "1.1",
+      "doc": "Se ha cambiado de lista: {kind}."
+    },
+    "volume.changed": {
+      "permission": "player.read",
+      "since": "1.1",
+      "doc": "Ha cambiado el volumen o el silencio: {v, m}."
+    },
+    "programme.started": {
+      "permission": "epg.read",
+      "since": "1.1",
+      "doc": "Ha empezado un programa en un canal que se está viendo: {channel, id, title, start}."
+    },
+    "ad.started": {
+      "permission": "player.read",
+      "since": "1.2",
+      "doc": "Ha empezado una pausa de anuncios en el canal que se ve: {channel, name, origin: «scte» o «player», soft, seconds, known}. «seconds» es lo que se calcula que durará; «known», si la marca lo decía."
+    },
+    "ad.ended": {
+      "permission": "player.read",
+      "since": "1.2",
+      "doc": "Ha acabado la pausa de anuncios: {channel, name, quiet}. «quiet»: la acabó el usuario al tomar el mando (cambió de canal), no el final del corte."
+    },
+    "config.changed": {
+      "permission": null,
+      "since": "1.1",
+      "doc": "El usuario ha cambiado un ajuste del plugin: recibes todos los valores {ajuste: valor}. Para leerlos al arrancar usa tdt.config.all()."
+    },
+    "schedule": {
+      "permission": null,
+      "since": "1.1",
+      "doc": "Ha llegado una hora de las que pediste en «tdt.activation» (onTime:HH:MM): recibes {at: 'HH:MM'}. Un plugin dormido se despierta con ella."
+    }
+  },
+  "methods": {
+    "player.state": {
+      "since": "1.0",
+      "permission": "player.read",
+      "args": [],
+      "returns": "{ kind, mode, layout, focus, vol: {v, m}, rot: {on, secs}, tiles: [{slot, id, name, kind}], u7d }",
+      "doc": "La foto del estado del reproductor. No lleva direcciones de vídeo."
+    },
+    "player.play": {
+      "since": "1.0",
+      "permission": "player.control",
+      "args": [
+        {
+          "name": "channel",
+          "type": "string",
+          "min": 1,
+          "max": 200,
+          "hint": "«channel» tiene que ser un texto de hasta 200 caracteres (el id o el nombre del canal)"
+        }
+      ],
+      "returns": "string (el nombre del canal)",
+      "doc": "Pone un canal, por id o por nombre (sin importar mayúsculas ni tildes). Falla si no existe o no se puede reproducir."
+    },
+    "player.kind": {
+      "since": "1.0",
+      "permission": "player.control",
+      "args": [
+        {
+          "name": "kind",
+          "type": "string",
+          "enum": [
+            "tv",
+            "radio"
+          ],
+          "hint": "«kind» tiene que ser \"tv\" o \"radio\""
+        }
+      ],
+      "returns": "string",
+      "doc": "Cambia de lista."
+    },
+    "player.volume": {
+      "since": "1.0",
+      "permission": "player.control",
+      "args": [
+        {
+          "name": "value",
+          "type": "number",
+          "min": 0,
+          "max": 1,
+          "hint": "el volumen es un número entre 0 y 1"
+        }
+      ],
+      "returns": "string",
+      "doc": "Fija el volumen (de 0 a 1)."
+    },
+    "player.mute": {
+      "since": "1.0",
+      "permission": "player.control",
+      "args": [
+        {
+          "name": "on",
+          "type": "boolean",
+          "optional": true,
+          "default": true
+        }
+      ],
+      "returns": "string",
+      "doc": "Silencia o devuelve el sonido; sin argumento, silencia."
+    },
+    "player.multi": {
+      "since": "1.0",
+      "permission": "player.control",
+      "args": [
+        {
+          "name": "channels",
+          "type": "array",
+          "min": 1,
+          "max": 4,
+          "items": {
+            "type": "string",
+            "min": 1,
+            "max": 200
+          },
+          "hint": "multi necesita de 1 a 4 canales (ids o nombres)"
+        },
+        {
+          "name": "rotateSeconds",
+          "type": "number",
+          "enum": [
+            10,
+            15,
+            20,
+            30,
+            45,
+            60
+          ],
+          "optional": true,
+          "nullable": true,
+          "hint": "rotar cada: 10, 15, 20, 30, 45 o 60 segundos"
+        }
+      ],
+      "returns": "string",
+      "doc": "Multivisión con 1 a 4 canales; con el segundo argumento rota el audio."
+    },
+    "channels.search": {
+      "since": "1.0",
+      "permission": "channels.read",
+      "args": [
+        {
+          "name": "query",
+          "type": "string",
+          "max": 200,
+          "optional": true,
+          "default": "",
+          "hint": "«query» tiene que ser un texto de hasta 200 caracteres"
+        },
+        {
+          "name": "options",
+          "type": "object",
+          "optional": true,
+          "doc": "{ kind: 'tv' | 'radio', limit: 1..50 }"
+        }
+      ],
+      "returns": "{ total, channels: [{ id, name, kind, category, hasGuide }] }",
+      "doc": "Busca palabras en el nombre y la categoría, sin importar tildes; solo canales que se pueden reproducir."
+    },
+    "epg.now": {
+      "since": "1.0",
+      "permission": "epg.read",
+      "args": [
+        {
+          "name": "channel",
+          "type": "string",
+          "min": 1,
+          "max": 200,
+          "hint": "«channel» tiene que ser un texto de hasta 200 caracteres (el id o el nombre del canal)"
+        }
+      ],
+      "returns": "{ channel, now: {start, end, title} | null, next: {start, end, title} | null }",
+      "doc": "Qué dan ahora y después en un canal (segundos Unix)."
+    },
+    "ui.toast": {
+      "since": "1.0",
+      "permission": "ui.toast",
+      "args": [
+        {
+          "name": "text",
+          "type": "string",
+          "min": 1,
+          "max": 160,
+          "hint": "«text» tiene que ser un texto de hasta 160 caracteres"
+        }
+      ],
+      "returns": "true",
+      "doc": "Un aviso breve sobre la imagen con el nombre del plugin delante."
+    },
+    "ui.resize": {
+      "since": "1.0",
+      "permission": null,
+      "args": [
+        {
+          "name": "width",
+          "type": "number"
+        },
+        {
+          "name": "height",
+          "type": "number"
+        }
+      ],
+      "returns": "{ width, height }",
+      "doc": "Cambia el tamaño de un panel flotante, dentro de los límites. Falla si el plugin no tiene panel o ocupa la pantalla."
+    },
+    "storage.get": {
+      "since": "1.0",
+      "permission": "storage",
+      "args": [
+        {
+          "name": "key",
+          "type": "string",
+          "min": 1,
+          "max": 64
+        }
+      ],
+      "returns": "any | null",
+      "doc": "El valor guardado, o null."
+    },
+    "storage.set": {
+      "since": "1.0",
+      "permission": "storage",
+      "args": [
+        {
+          "name": "key",
+          "type": "string",
+          "min": 1,
+          "max": 64
+        },
+        {
+          "name": "value",
+          "type": "any"
+        }
+      ],
+      "returns": "true",
+      "doc": "Guarda cualquier cosa que se pueda pasar a JSON."
+    },
+    "storage.remove": {
+      "since": "1.0",
+      "permission": "storage",
+      "args": [
+        {
+          "name": "key",
+          "type": "string",
+          "min": 1,
+          "max": 64
+        }
+      ],
+      "returns": "boolean",
+      "doc": "Borra una clave."
+    },
+    "storage.keys": {
+      "since": "1.0",
+      "permission": "storage",
+      "args": [],
+      "returns": "string[]",
+      "doc": "Las claves, ordenadas."
+    },
+    "net.fetch": {
+      "since": "1.0",
+      "permission": "network:<servidor>",
+      "args": [
+        {
+          "name": "url",
+          "type": "string",
+          "min": 1,
+          "max": 2048
+        },
+        {
+          "name": "init",
+          "type": "object",
+          "optional": true,
+          "doc": "{ method: 'GET' | 'POST', headers, body }"
+        }
+      ],
+      "returns": "{ status, ok, url, contentType, text, json() }",
+      "doc": "Una petición https a un servidor cubierto por un permiso network:. Solo GET y POST, hasta 4 a la vez (el SDK pone en cola las demás)."
+    },
+    "config.get": {
+      "since": "1.1",
+      "permission": null,
+      "args": [
+        {
+          "name": "name",
+          "type": "string",
+          "min": 1,
+          "max": 32,
+          "hint": "«name» es el nombre de un ajuste que declaraste en tdt.settings del manifest"
+        }
+      ],
+      "returns": "el valor del ajuste (texto, número, true/false o la opción elegida)",
+      "doc": "Lee un ajuste que el usuario puede elegir en Ajustes ▸ Plugins (el que declaraste en «tdt.settings»). Si no lo ha tocado, devuelve tu valor por defecto. No hace falta ningún permiso: solo lees lo que el usuario te deja ver."
+    },
+    "config.all": {
+      "since": "1.1",
+      "permission": null,
+      "args": [],
+      "returns": "{ ajuste: valor, … }",
+      "doc": "Todos los ajustes del plugin con su valor actual (el elegido por el usuario o el de por defecto)."
+    },
+    "channels.provide": {
+      "since": "1.1",
+      "permission": "provide:channels",
+      "args": [
+        {
+          "name": "channels",
+          "type": "array",
+          "min": 0,
+          "max": 500,
+          "items": {
+            "type": "object"
+          },
+          "hint": "«channels» es una lista de hasta 500 canales {name, sources, logo?, web?, kind?, category?, group?, epg?}"
+        }
+      ],
+      "returns": "{ count } (los canales que aportas ahora)",
+      "doc": "Sustituye TODOS los canales que aporta este plugin por esta lista (vacía, los quita). Cada canal: {name, sources: [enlaces http(s)], logo, web, kind: 'tv' | 'radio', category, group, epg}. No se admiten cabeceras ni ids propios; salen en la lista con la categoría «Plugin · id» si no pones otra. Se quitan solos si el plugin se apaga."
+    },
+    "epg.provide": {
+      "since": "1.1",
+      "permission": "provide:epg",
+      "args": [
+        {
+          "name": "guide",
+          "type": "object",
+          "hint": "«guide» es un objeto {canal: [[inicio, fin, título, descripción?, categoría?], ...]}"
+        }
+      ],
+      "returns": "{ count } (los canales con guía que aportas ahora)",
+      "doc": "Sustituye TODA la guía que aporta este plugin. Claves: un nombre de canal tuyo; tiempos en segundos desde 1970; hasta 500 canales y 60 programas cada uno. Queda bajo «tu-id:canal»: un canal que aportes con tdt.channels.provide la usa poniendo epg: 'tu-id:canal'. No puede sustituir la guía de un canal de las listas. Vive en memoria: vuelve a entregarla al arrancar."
+    }
+  }
+}

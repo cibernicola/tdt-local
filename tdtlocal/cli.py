@@ -177,7 +177,12 @@ def run(config: Config, open_browser: bool = False) -> None:
 
 
 def main(argv: Sequence[str] | None = None) -> None:
-    args = build_parser().parse_args(argv)
+    words = list(sys.argv[1:] if argv is None else argv)
+    if words[:1] == ["mcp"]:  # `tdt-local mcp`: the MCP server by standard input and output (an AI client starts it)
+        from .mcp import main as mcp_main
+
+        sys.exit(mcp_main(words[1:]))
+    args = build_parser().parse_args(words)
     config = config_from_args(args)
     configure_logging(config)
     run(config, open_browser=args.open)

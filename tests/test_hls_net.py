@@ -96,6 +96,36 @@ class NetTests(unittest.TestCase):
             with self.assertRaises(Blocked, msg=url):
                 strict.check_url(url, require_allowed=True)
 
+    def test_a_host_that_turns_private_after_the_check_is_never_connected_to(self):
+        """DNS rebinding: public when the URL is checked, the loopback address when the connection is made."""
+        self.origin.routes["/secret"] = (200, {}, b"internal")
+        port = self.origin.httpd.server_address[1]
+        public = [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", port))]
+        loopback = [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("127.0.0.1", port))]
+        strict = Net(allow_private=False)
+        with (
+            mock.patch("tdtlocal.net.socket.getaddrinfo", side_effect=[public, loopback]),
+            mock.patch("tdtlocal.net.urllib.request.getproxies", return_value={}),
+        ):
+            strict.check_url(f"http://rebind.example:{port}/secret", require_allowed=False)
+            strict._dns.clear()  # the answer was kept for a moment: let it expire, as it would for a slow request
+            with self.assertRaises(Blocked):
+                strict.open(f"http://rebind.example:{port}/secret", require_allowed=False)
+        self.assertEqual(self.origin.requests, [], "nothing reached the private address")
+
+    def test_the_connection_uses_the_address_that_was_checked(self):
+        """What the check resolved is what is connected to, without asking DNS again."""
+        self.origin.routes["/ok"] = (200, {}, b"fine")
+        port = self.origin.httpd.server_address[1]
+        local = [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("127.0.0.1", port))]
+        with (
+            mock.patch("tdtlocal.net.socket.getaddrinfo", return_value=local) as lookup,
+            mock.patch("tdtlocal.net.urllib.request.getproxies", return_value={}),
+            self.net.open(f"http://some-name.example:{port}/ok", require_allowed=False) as response,
+        ):
+            self.assertEqual(response.read(), b"fine")
+        self.assertEqual(lookup.call_count, 1)
+
     def test_unresolvable_host_is_blocked(self):
         with (
             mock.patch("tdtlocal.net.socket.getaddrinfo", side_effect=socket.gaierror),

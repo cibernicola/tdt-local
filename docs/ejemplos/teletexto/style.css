@@ -1,0 +1,26 @@
+/* Bedstead: la fuente de los teletextos de la BBC (CC0, ver bedstead-LICENSE.txt). */
+@font-face { font-family: 'Bedstead'; src: url('bedstead.otf') format('opentype'); }
+:root { color-scheme: light dark; }
+html, body { height: 100%; margin: 0; }
+body { background: #14171a; color: #e9ece6; font: 14px/1.4 system-ui, sans-serif; }
+.ttx { box-sizing: border-box; display: grid; grid-template-columns: minmax(0, 1fr) 210px; gap: 14px; align-items: start; height: 100%; padding: 12px 14px; }
+.ttx-screen { background: #000; border: 1px solid #3a413d; border-radius: 4px; justify-self: center; max-width: 100%; width: min(100%, calc((100vh - 24px) * 1.6)); image-rendering: auto; }
+.ttx-remote { display: grid; gap: 10px; align-content: start; }
+.ttx-remote form { display: flex; gap: 8px; align-items: end; }
+.ttx-remote form label { flex: 1; display: grid; gap: 2px; font-size: 12px; opacity: .8; }
+.ttx-remote input { width: 100%; box-sizing: border-box; font: inherit; font-size: 18px; text-align: center; font-variant-numeric: tabular-nums; }
+button { font: inherit; color: #e9ece6; background: #262c29; border: 1px solid #6d746f; border-radius: 4px; padding: 4px 10px; cursor: pointer; }
+button:hover:not(:disabled) { background: #323a36; }
+button:disabled { opacity: .35; cursor: default; }
+.seg { display: flex; align-items: center; gap: 4px; }
+.seg button { flex: 1; }
+.seg .ttx-sub { flex: 2; text-align: center; font-size: 12px; opacity: .75; }
+.ttx-colores { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.ttx-colores button { display: grid; gap: 1px; justify-items: center; color: #101010; border-color: #3a413d; padding: 6px 4px; }
+.ttx-colores small { font-size: 11px; min-height: 13px; }
+.rojo { background: #e0584f; } .verde { background: #5cbf6a; } .amarillo { background: #e6cb4b; } .azul { background: #6f8fe0; }
+.rojo:hover:not(:disabled) { background: #ea6e66; } .verde:hover:not(:disabled) { background: #74cd81; }
+.amarillo:hover:not(:disabled) { background: #efd965; } .azul:hover:not(:disabled) { background: #89a3ea; }
+.ttx-secciones { display: flex; flex-wrap: wrap; gap: 6px; }
+.ttx-estado { margin: 0; font-size: 12px; opacity: .75; }
+@media (max-width: 760px) { .ttx { grid-template-columns: 1fr; } }

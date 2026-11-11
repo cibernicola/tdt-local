@@ -1,0 +1,91 @@
+{
+  "version": 1,
+  "about": "Lo que TDT local sabe hacer (orders) y de lo que avisa (events), en un solo sitio. Reglas, plugins, el bus de control y el MCP lo comparten: las pruebas comprueban que cada uno entiende exactamente estas órdenes y estos eventos.",
+  "commands": {
+    "player.play": {
+      "title": "Poner un canal",
+      "rule": "play",
+      "bus": "play",
+      "plugin": "player.play",
+      "args": { "channel": { "type": "string", "required": true, "max": 120, "doc": "nombre o id del canal" } },
+      "example": { "channel": "La 1" }
+    },
+    "player.kind": {
+      "title": "Cambiar entre televisión, radio y últimos 7 días",
+      "rule": "kind",
+      "bus": "kind",
+      "plugin": "player.kind",
+      "args": { "kind": { "type": "string", "required": true, "enum": ["tv", "radio", "u7d"] } },
+      "example": { "kind": "radio" }
+    },
+    "player.volume": {
+      "title": "Fijar el volumen",
+      "rule": "volume",
+      "bus": "volume",
+      "plugin": "player.volume",
+      "args": { "value": { "type": "number", "required": true, "min": 0, "max": 1 } },
+      "example": { "value": 0.4 }
+    },
+    "player.mute": {
+      "title": "Silenciar o devolver el sonido",
+      "rule": "mute",
+      "bus": "mute",
+      "plugin": "player.mute",
+      "args": { "on": { "type": "boolean", "required": true } },
+      "example": { "on": true }
+    },
+    "player.multi": {
+      "title": "Poner de 1 a 4 canales en la multivisión",
+      "rule": "multi",
+      "bus": "multi",
+      "plugin": "player.multi",
+      "args": {
+        "channels": { "type": "array", "required": true, "min": 1, "max": 4, "items": "string", "doc": "nombres o ids" },
+        "rotate": { "type": "integer", "min": 5, "max": 600, "doc": "segundos entre canales (opcional)" }
+      },
+      "example": { "channels": ["La 1", "La 2"], "rotate": 30 }
+    },
+    "ui.toast": {
+      "title": "Avisar con un texto en pantalla",
+      "rule": "toast",
+      "bus": null,
+      "plugin": "ui.toast",
+      "args": { "text": { "type": "string", "required": true, "max": 200 } },
+      "example": { "text": "Empieza el Telediario" }
+    }
+  },
+  "events": {
+    "channel.changed": {
+      "title": "Se ha puesto otro canal",
+      "permission": "player.read",
+      "rule": "channel",
+      "data": { "id": "id del canal", "name": "nombre", "kind": "tv, radio o u7d", "cause": "«rule» si lo hizo una regla" }
+    },
+    "kind.changed": {
+      "title": "Se ha cambiado de lista (televisión, radio, últimos 7 días)",
+      "permission": "player.read",
+      "data": { "kind": "tv, radio o u7d", "cause": "«rule» si lo hizo una regla" }
+    },
+    "volume.changed": {
+      "title": "Ha cambiado el volumen o el silencio",
+      "permission": "player.read",
+      "data": { "v": "de 0 a 1", "m": "silenciado", "cause": "«rule» si lo hizo una regla" }
+    },
+    "programme.started": {
+      "title": "Ha empezado un programa en un canal que se está viendo",
+      "permission": "epg.read",
+      "rule": "programme",
+      "data": { "channel": "nombre del canal", "id": "id del canal", "title": "título", "start": "segundos desde 1970" }
+    },
+    "ad.started": {
+      "title": "Ha empezado una pausa de anuncios en el canal que se ve",
+      "permission": "player.read",
+      "data": { "channel": "id del canal", "name": "nombre", "origin": "scte (marca) o player (lo dijo el reproductor)", "soft": "poco programa antes: solo sonido y aviso", "seconds": "lo que se calcula que dura", "known": "si la marca decía cuánto dura" }
+    },
+    "ad.ended": {
+      "title": "Ha acabado la pausa de anuncios",
+      "permission": "player.read",
+      "data": { "channel": "id del canal", "name": "nombre", "quiet": "la acabó el usuario al tomar el mando" }
+    }
+  }
+}

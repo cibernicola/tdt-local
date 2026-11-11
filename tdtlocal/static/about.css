@@ -5,4 +5,6 @@ body.about h1 small { font-size: .5em; color: var(--muted); font-weight: normal;
 body.about a { color: var(--accent); }
 body.about code { background: var(--panel); padding: 0 .3em; border-radius: 3px; }
 body.about li { margin: .5em 0; }
+body.about .tagline { margin: -6px 0 14px; color: var(--muted); letter-spacing: .04em; }
+body.about .tagline strong { color: var(--accent); }
 body.about .note { border-left: 3px solid var(--accent); background: var(--panel); padding: 10px 14px; border-radius: 0 4px 4px 0; }

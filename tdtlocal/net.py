@@ -7,6 +7,7 @@ globally routable are always refused.
 
 from __future__ import annotations
 
+import http.client
 import ipaddress
 import socket
 import ssl
@@ -15,6 +16,7 @@ import threading
 import time
 import urllib.parse
 import urllib.request
+from collections.abc import Iterable
 from email.message import Message
 from pathlib import Path
 from typing import IO, Any
@@ -79,15 +81,71 @@ def host_of(url: str) -> str:
 class _RedirectGuard(urllib.request.HTTPRedirectHandler):
     """Re-validates every redirect target and adds it to the allowed hosts."""
 
-    def __init__(self, net: Net) -> None:
+    def __init__(self, net: Net, strip: Iterable[str] = ()) -> None:
         self.net = net
+        self.strip = {name.lower() for name in strip}  # headers that must not follow a redirect to another host
 
     def redirect_request(
         self, req: Any, fp: IO[bytes], code: int, msg: str, headers: Message, newurl: str
     ) -> urllib.request.Request | None:
         self.net.check_url(newurl, require_allowed=False)
         self.net.allow(newurl)
-        return super().redirect_request(req, fp, code, msg, headers, newurl)
+        new = super().redirect_request(req, fp, code, msg, headers, newurl)
+        if new is not None and self.strip and host_of(newurl) != host_of(req.full_url):
+            for store in (new.headers, new.unredirected_hdrs):
+                for name in [k for k in store if k.lower() in self.strip]:
+                    del store[name]
+        return new
+
+
+def _connect(net: Net, host: str, port: int, timeout: Any, source_address: Any) -> socket.socket:
+    """A socket to ``host`` that only ever uses the addresses ``net`` has checked (see :meth:`Net.resolve`)."""
+    failure: OSError | None = None
+    for family, kind, proto, _name, address in net.resolve(host, port):
+        sock = socket.socket(family, kind, proto)
+        try:
+            if timeout is not socket._GLOBAL_DEFAULT_TIMEOUT:  # type: ignore[attr-defined]
+                sock.settimeout(timeout)
+            if source_address:
+                sock.bind(source_address)
+            sock.connect(address)
+            sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+            return sock
+        except OSError as exc:
+            sock.close()
+            failure = exc
+    raise failure or OSError(f"sin direcciones para {host}")
+
+
+def _pinned(base: type[http.client.HTTPConnection], net: Net) -> type[http.client.HTTPConnection]:
+    """``base`` (plain or TLS) with a ``connect`` that goes through :func:`_connect`."""
+
+    class Pinned(base):  # type: ignore[valid-type, misc]
+        def connect(self) -> None:
+            sock = _connect(net, self.host, self.port, self.timeout, self.source_address)
+            if isinstance(self, http.client.HTTPSConnection):
+                sock = self._context.wrap_socket(sock, server_hostname=self.host)  # type: ignore[attr-defined]
+            self.sock = sock
+
+    return Pinned
+
+
+class _PinnedHTTP(urllib.request.HTTPHandler):
+    def __init__(self, net: Net) -> None:
+        super().__init__()
+        self._connection = _pinned(http.client.HTTPConnection, net)
+
+    def http_open(self, req: urllib.request.Request) -> Any:
+        return self.do_open(self._connection, req)  # type: ignore[arg-type]
+
+
+class _PinnedHTTPS(urllib.request.HTTPSHandler):
+    def __init__(self, net: Net, context: ssl.SSLContext) -> None:
+        super().__init__(context=context)
+        self._connection = _pinned(http.client.HTTPSConnection, net)
+
+    def https_open(self, req: urllib.request.Request) -> Any:
+        return self.do_open(self._connection, req, context=self._context)  # type: ignore[arg-type, attr-defined]
 
 
 class Net:
@@ -97,7 +155,7 @@ class Net:
         self.allow_private = allow_private
         self.hosts: set[str] = set()
         self._ctx = create_ssl_context()
-        self._dns_ok: dict[str, float] = {}
+        self._dns: dict[tuple[str, int], tuple[float, list[Any]]] = {}
         self._lock = threading.Lock()
 
     def allow(self, url: str) -> None:
@@ -122,28 +180,50 @@ class Net:
         host = parts.hostname.lower()
         if require_allowed and not self.is_allowed(host):
             raise Blocked(f"host fuera de las listas: {host}")
-        if self._dns_ok.get(host, 0) > time.time():
-            return parts
         try:
-            infos = socket.getaddrinfo(host, port or (443 if parts.scheme == "https" else 80), type=socket.SOCK_STREAM)
+            self.resolve(host, port or (443 if parts.scheme == "https" else 80))
         except socket.gaierror as exc:
             if urllib.request.getproxies().get(parts.scheme):
                 return parts  # the system proxy resolves it
             raise Blocked(f"no resuelve: {host}") from exc
-        for info in infos:
-            ip = ipaddress.ip_address(info[4][0].split("%")[0])
-            if not self.allow_private and not ip.is_global:
-                raise Blocked("dirección no pública")
-        self._dns_ok[host] = time.time() + DNS_CACHE_SECONDS  # avoids a DNS lookup per segment
         return parts
 
+    def resolve(self, host: str, port: int) -> list[Any]:
+        """The addresses of ``host``, every one checked to be public (unless private ones are allowed), kept for a short
+        while so that a segment does not cost a DNS lookup. A connection made by :meth:`open` uses exactly these, so a
+        host that answers a public address now and a private one a moment later (DNS rebinding) is never reached.
+        Raises :class:`Blocked`, or ``socket.gaierror`` if the name does not resolve."""
+        key = (host, port)
+        with self._lock:
+            hit = self._dns.get(key)
+        if hit and hit[0] > time.time():
+            return hit[1]
+        infos = socket.getaddrinfo(host, port, type=socket.SOCK_STREAM)
+        for info in infos:
+            if not self.allow_private and not ipaddress.ip_address(info[4][0].split("%")[0]).is_global:
+                raise Blocked("dirección no pública")
+        with self._lock:
+            self._dns[key] = (time.time() + DNS_CACHE_SECONDS, infos)
+        return infos
+
     def open(
-        self, url: str, headers: dict[str, str] | None = None, require_allowed: bool = True, timeout: float = 20
+        self,
+        url: str,
+        headers: dict[str, str] | None = None,
+        require_allowed: bool = True,
+        timeout: float = 20,
+        strip_on_redirect: Iterable[str] = (),
     ) -> Any:
-        """Open ``url`` after validating it. The caller must close the response."""
+        """Open ``url`` after validating it. The caller must close the response. The headers in ``strip_on_redirect``
+        (the ones that may be credentials) are not sent on to another host if the origin redirects there."""
         url = url.replace(" ", "%20")
         self.check_url(url, require_allowed)
-        opener = urllib.request.build_opener(_RedirectGuard(self), urllib.request.HTTPSHandler(context=self._ctx))
+        handlers: list[Any] = [_RedirectGuard(self, strip_on_redirect)]
+        if urllib.request.getproxies().get(urllib.parse.urlsplit(url).scheme):
+            handlers.append(urllib.request.HTTPSHandler(context=self._ctx))  # a system proxy makes the connection
+        else:
+            handlers += [_PinnedHTTP(self), _PinnedHTTPS(self, self._ctx)]
+        opener = urllib.request.build_opener(*handlers)
         merged = dict(DEFAULT_HEADERS)
         merged.update(headers or {})
         return opener.open(urllib.request.Request(url, headers=merged), timeout=timeout)

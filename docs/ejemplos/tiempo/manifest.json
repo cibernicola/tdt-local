@@ -1,0 +1,13 @@
+{
+  "name": "El tiempo",
+  "version": "1.0.0",
+  "description": "La temperatura de una ciudad, de Open-Meteo. Ejemplo de plugin que habla con un servidor de internet.",
+  "author": "TDT local (ejemplo)",
+  "homepage": "https://github.com/cibernicola/tdt-local",
+  "tdt": {
+    "api": 1,
+    "label": "El tiempo",
+    "panel": { "width": 260, "height": 150 },
+    "permissions": ["network:api.open-meteo.com", "storage", "ui.toast"]
+  }
+}

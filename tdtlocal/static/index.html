@@ -72,6 +72,8 @@
         <button class="btn" id="btnFav" type="button" aria-pressed="false">Favorito</button>
         <button class="btn" id="btnPip" type="button">Ventana flotante</button>
         <button class="btn" id="btnFull" type="button">Pantalla completa</button>
+        <button class="btn" id="btnRules" type="button" title="Reglas: «cuando pase esto, haz aquello» (a una hora, al poner un canal, al empezar un programa)">Reglas</button>
+        <button class="btn" id="btnHdr" type="button" hidden title="Cabeceras (Referer, Origin, User-Agent…) que se mandan al servidor de este canal">Cabeceras</button>
         <button class="btn" id="btnDel" type="button" hidden title="Quitar este canal de tus canales propios">Quitar canal</button>
         <button class="btn" id="btnPanel" type="button" aria-controls="panel" aria-expanded="true">Ocultar canales</button>
       </div>
@@ -81,7 +83,7 @@
   <aside class="panel" id="panel" aria-label="Canales">
     <header class="panel-head">
       <div class="title-row">
-        <h1>TDT local</h1>
+        <h1 title="Tune · Display · Tinker — local">TDT local</h1>
         <span class="meta" id="meta"></span>
       </div>
       <div class="seg kinds" id="kinds" role="group" aria-label="Tipo de lista">
@@ -138,6 +140,60 @@
   </aside>
 
 </div>
+<dialog class="dlg dlg-wide" id="hdrDlg" aria-labelledby="hdrTitle">
+  <form id="hdrForm" autocomplete="off">
+    <h3 id="hdrTitle">Cabeceras de la petición</h3>
+    <p class="dlg-hint" id="hdrWho"></p>
+    <div class="hdr-rows" id="hdrRows"></div>
+    <div class="hdr-tools">
+      <button class="btn" type="button" id="hdrAdd">Añadir cabecera</button>
+      <button class="btn" type="button" id="hdrAtres" title="Origin y Referer de Atresplayer">Poner las de Atresplayer</button>
+    </div>
+    <p class="dlg-hint" id="hdrIntro"></p>
+    <p class="dlg-msg" id="hdrMsg" role="status"></p>
+    <div class="dlg-actions">
+      <button class="btn" type="button" id="hdrCancel">Cancelar</button>
+      <button class="btn primary" type="submit">Guardar</button>
+    </div>
+  </form>
+</dialog>
+<dialog class="dlg dlg-wide" id="inspectorDlg" aria-labelledby="insTitle">
+  <h3 id="insTitle">Inspector</h3>
+  <p class="dlg-hint">Lo que pasa en la aplicación, en directo: los <strong>eventos</strong>, lo que <strong>piden los plugins</strong> (qué método y cómo acabó, nunca los datos) y lo que hacen las <strong>reglas</strong>. Solo mira: no cambia nada.</p>
+  <div class="hdr-tools">
+    <label>Mostrar <select id="insKind"></select></label>
+    <label>Buscar <input type="search" id="insText" placeholder="un plugin, un método, E_PERMISSION…" autocomplete="off"></label>
+    <label class="chk"><input type="checkbox" id="insPause"> Pausar</label>
+  </div>
+  <p class="dlg-hint" id="insHooks"></p>
+  <ul class="ins-log" id="insLog" aria-live="off"></ul>
+  <div class="dlg-actions"><button class="btn primary" type="button" id="insClose">Cerrar</button></div>
+</dialog>
+<dialog class="dlg dlg-wide" id="rulesDlg" aria-labelledby="rulesTitle">
+  <form id="rulesForm" autocomplete="off">
+    <h3 id="rulesTitle">Reglas</h3>
+    <p class="dlg-hint" id="rulesIntro"></p>
+    <ul class="rules-list" id="rulesList"></ul>
+    <section id="rulesBrought" hidden>
+      <p class="dlg-hint">Reglas que traen los plugins. <strong>Están apagadas hasta que las enciendas tú</strong>: lee la frase antes.</p>
+      <ul class="rules-list" id="rulesBroughtList"></ul>
+    </section>
+    <label class="rules-label" for="rulesText">Las reglas, como texto (JSON)</label>
+    <textarea class="rules-text" id="rulesText" rows="12" spellcheck="false" aria-describedby="rulesMsg"></textarea>
+    <div class="hdr-tools">
+      <button class="btn" type="button" id="rulesExample">Ejemplo</button>
+    </div>
+    <details class="rules-history">
+      <summary>Lo que han hecho</summary>
+      <pre id="rulesLog"></pre>
+    </details>
+    <p class="dlg-msg" id="rulesMsg" role="status"></p>
+    <div class="dlg-actions">
+      <button class="btn" type="button" id="rulesCancel">Cancelar</button>
+      <button class="btn primary" type="submit">Guardar</button>
+    </div>
+  </form>
+</dialog>
 <dialog class="dlg" id="addDlg" aria-labelledby="addTitle">
   <form id="addForm" autocomplete="off">
     <h3 id="addTitle">Añadir canal propio</h3>

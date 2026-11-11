@@ -33,12 +33,13 @@ from .store import read_json, write_json
 log = logging.getLogger(__name__)
 
 FILE_VERSION = 1
-SECTIONS = ("ai", "stt", "lists", "scte", "ads")
+SECTIONS = ("ai", "stt", "lists", "scte", "ads", "control")
 LANGUAGES = ("es", "ca", "gl", "eu", "en", "fr", "pt", "de", "it", "auto")
 SCTE_SCOPES = ("viewing", "list", "all")
 AD_AUDIO = ("keep", "mute", "lower")
 AD_SCREEN = ("keep", "channel", "web")
 AD_TOUCH = ("respect", "restore")
+CONTROL_LEVELS = ("read", "control", "dev")
 URL = re.compile(r"https?://[^\s]+$")
 MAX_URL = 400
 MAX_PATH = 500
@@ -213,6 +214,9 @@ FIELDS: tuple[Field, ...] = (
     Field("ad_min_seconds", "ads", "int", 10, 0, 600),
     Field("ad_unknown_seconds", "ads", "int", 120, 10, 900),
     Field("ad_on_touch", "ads", "choice", "respect", choices=AD_TOUCH),
+    # access for AIs and plugins (control.py): off until the user turns it on
+    Field("control_enabled", "control", "bool", False),
+    Field("control_level", "control", "choice", "read", choices=CONTROL_LEVELS),
 )
 BY_NAME = {f.name: f for f in FIELDS}
 

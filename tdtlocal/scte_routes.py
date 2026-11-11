@@ -86,7 +86,7 @@ def handle_get(handler: Handler, path: str) -> bool:
         return True
     events = [_public(e) for e in log.all()]
     if query.get("fmt") == ["csv"]:
-        payload = ("﻿" + to_csv(events)).encode("utf-8")
+        payload = ("\ufeff" + to_csv(events)).encode("utf-8")
         ctype, name = "text/csv; charset=utf-8", "tdt-local-scte35.csv"
     else:
         payload = json.dumps(events, ensure_ascii=False, indent=2).encode("utf-8")

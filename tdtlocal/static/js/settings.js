@@ -2,8 +2,15 @@
 // What is shown is described in lib/settings-form.js; everything is validated and saved by the server.
 import { requestJson } from './api.js';
 import { $, el } from './dom.js';
+import { CONTROL_INTRO, describeControl, describeUse } from './lib/control.js';
+import { DEV_INTRO, describeDevPlugin, summarizeDev } from './lib/dev-panel.js';
 import { LOGS_INTRO, MODES, filterLines, summarize as summarizeLogs } from './lib/logs-panel.js';
-import { PLUGINS_INTRO, describePlugin, summarize } from './lib/plugins-panel.js';
+import {
+  DEV_POINTER, ONLINE_INTRO, PLUGINS_INTRO, describeCatalogEntry, describePlugin, describeRuntime, permissionRows, settingHint, settingValue, summarize,
+} from './lib/plugins-panel.js';
+import { pluginHost } from './plugin-host.js';
+import { inspectorButton } from './inspector.js';
+import { themeControl } from './themes.js';
 import {
   FIELDS, TABS, collectChanges, describeDiagnosis, describeDownload, fieldsOf, formatBytes, percent,
 } from './lib/settings-form.js';
@@ -18,8 +25,10 @@ let removeKey = null; // the "remove saved key" checkbox
 // only the desktop app has window.tdtDesktop; in a browser the settings have no «Plugins» tab
 const desktop = () => (typeof window !== 'undefined' && window.tdtDesktop && window.tdtDesktop.plugins) || null;
 const desktopLogs = () => (typeof window !== 'undefined' && window.tdtDesktop && window.tdtDesktop.logs) || null;
+const desktopDev = () => (typeof window !== 'undefined' && window.tdtDesktop && window.tdtDesktop.dev) || null;
 const tabsShown = () => (desktop()
-  ? [...TABS, { id: 'plugins', label: 'Plugins' }, ...(desktopLogs() ? [{ id: 'logs', label: 'Registro' }] : [])]
+  ? [...TABS, { id: 'plugins', label: 'Plugins' }, ...(desktopLogs() ? [{ id: 'logs', label: 'Registro' }] : []),
+    ...(desktopDev() ? [{ id: 'dev', label: 'Desarrollo' }] : [])]
   : TABS);
 
 const dlg = () => $('setDlg');
@@ -155,6 +164,27 @@ function adsHelp() {
 function pluginsPanel() {
   const box = el('div', 'plugins');
   box.append(el('p', 'dlg-hint', PLUGINS_INTRO));
+  if (desktopDev()) { // the development plugins live in their own tab and nothing here says so
+    const pointer = el('p', 'dlg-hint', DEV_POINTER + ' ');
+    const go = el('button', 'btn', 'Ir a Desarrollo');
+    go.type = 'button';
+    go.addEventListener('click', () => showTab('dev'));
+    pointer.append(go);
+    box.append(pointer);
+  }
+  box.append(themeControl());
+  const insp = el('p', 'dlg-hint');
+  insp.append(inspectorButton(), ' Eventos, llamadas de los plugins y reglas en directo.');
+  box.append(insp);
+  const safe = el('p', 'dlg-hint');
+  const safeButton = el('button', 'btn', 'Reiniciar en modo seguro');
+  safeButton.type = 'button';
+  safeButton.id = 'pluginSafeButton';
+  safeButton.title = 'Reinicia la aplicación sin que corra ningún plugin: para encontrar uno que la rompe. No pierdes lo que tenías activado.';
+  safeButton.addEventListener('click', () => { if (window.tdtDesktop && window.tdtDesktop.safe) window.tdtDesktop.safe.restart(!safeButton.dataset.safe); });
+  safe.id = 'pluginSafe';
+  safe.append(safeButton, ' ', el('span', '', 'Arranca sin ningún plugin (lo que tienes activado se conserva).'));
+  box.append(safe);
   const summary = el('p', 'dlg-hint');
   summary.id = 'pluginSummary';
   summary.setAttribute('role', 'status');
@@ -174,10 +204,164 @@ function pluginsPanel() {
   const rescan = el('button', 'btn', 'Buscar de nuevo');
   rescan.type = 'button';
   rescan.addEventListener('click', async () => paintPlugins(await desktop().rescan()));
-  actions.append(open, rescan);
+  const install = el('button', 'btn', 'Instalar desde un archivo…');
+  install.type = 'button';
+  install.title = 'Un archivo .tdtplugin que te han pasado: se te enseña qué pide antes de instalarlo';
+  install.addEventListener('click', async () => {
+    const r = await desktop().install();
+    if (r && r.list) paintPlugins(r.list);
+    pluginNote(r && r.error ? 'No se instaló: ' + r.error : r && r.id ? 'Instalado «' + r.id + '». Actívalo en la lista cuando quieras.' : '');
+  });
+  actions.append(open, rescan, install);
+  const make = el('div', 'plugin-actions');
+  const name = el('input');
+  name.type = 'text';
+  name.id = 'pluginNewName';
+  name.maxLength = 60;
+  name.placeholder = 'Nombre del plugin nuevo';
+  name.setAttribute('aria-label', 'Nombre del plugin nuevo');
+  // three starting points: each one writes a folder with something that already works, to change
+  const maker = (label, title, kind, fallback, after) => {
+    const button = el('button', 'btn', label);
+    button.type = 'button';
+    button.title = title;
+    button.addEventListener('click', async () => {
+      const r = await desktop().create(name.value.trim() || fallback, kind);
+      if (r && r.list) paintPlugins(r.list);
+      pluginNote(r && r.id ? 'Creado «' + r.id + '» en ' + r.folder + '. ' + after : 'No se pudo crear.');
+      name.value = '';
+    });
+    return button;
+  };
+  make.append(
+    name,
+    maker('Crear un plugin nuevo', 'Un plugin aislado, con permisos: crea una carpeta con uno que ya funciona, para que lo cambies', 'ui', 'Mi plugin', 'Edítalo, pulsa «Buscar de nuevo» y actívalo en la lista.'),
+    maker('Crear un tema', 'Una hoja de estilo que cambia el aspecto de TDT local (sin código)', 'theme', 'Mi tema', 'Edita tema.css, pulsa «Buscar de nuevo» y actívalo: se te enseñará la hoja de estilo.'),
+    maker('Crear un plugin con todo el poder', 'Código dentro de la página, sin aislar, con los ganchos de la aplicación (puede cambiar lo que hace)', 'full', 'Mi plugin con todo el poder', 'Edita page.js, pulsa «Buscar de nuevo» y actívalo: se te enseñará su código.'),
+  );
+  const online = el('details', 'plugin-online');
+  online.append(el('summary', '', 'Instalar desde internet'), el('p', 'dlg-hint', ONLINE_INTRO));
+  const linkRow = el('div', 'plugin-actions');
+  const link = el('input');
+  link.type = 'url';
+  link.placeholder = 'https://…/mi-plugin.tdtplugin';
+  link.setAttribute('aria-label', 'Enlace del archivo .tdtplugin');
+  const sha = el('input');
+  sha.type = 'text';
+  sha.placeholder = 'SHA-256 (opcional, el que publica su autor)';
+  sha.setAttribute('aria-label', 'SHA-256 esperado');
+  const get = el('button', 'btn', 'Instalar desde el enlace');
+  get.type = 'button';
+  const installFrom = async (url, expected, signature) => {
+    pluginNote('Descargando…');
+    const r = await desktop().installLink(url, expected, signature);
+    if (r && r.list) paintPlugins(r.list);
+    pluginNote(r && r.error ? 'No se instaló: ' + r.error : r && r.id ? 'Instalado «' + r.id + '». Actívalo en la lista cuando quieras.' : '');
+  };
+  get.addEventListener('click', () => installFrom(link.value.trim(), sha.value.trim()));
+  linkRow.append(link, sha, get);
+  const catalogRow = el('div', 'plugin-actions');
+  const catalogUrl = el('input');
+  catalogUrl.type = 'url';
+  catalogUrl.placeholder = 'https://…/index.json (un catálogo)';
+  catalogUrl.setAttribute('aria-label', 'Enlace de un catálogo');
+  try { catalogUrl.value = localStorage.getItem('tdt:catalogUrl') || ''; } catch { /* no storage */ }
+  const see = el('button', 'btn', 'Ver el catálogo');
+  see.type = 'button';
+  const entries = el('ul', 'catalog-list');
+  see.addEventListener('click', async () => {
+    try { localStorage.setItem('tdt:catalogUrl', catalogUrl.value.trim()); } catch { /* no storage */ }
+    entries.replaceChildren();
+    pluginNote('Leyendo el catálogo…');
+    const r = await desktop().catalog(catalogUrl.value.trim());
+    if (!r || r.error) { pluginNote(r && r.error ? r.error : 'No se pudo leer el catálogo.'); return; }
+    pluginNote(`${r.entries.length} plugins en el catálogo de ${r.source}` + (r.problems.length ? ` (${r.problems.length} entradas con problemas: ${r.problems[0]})` : '') + '.');
+    for (const entry of r.entries) {
+      const d = describeCatalogEntry(entry);
+      const item = el('li', 'catalog-item');
+      const head = el('strong', '', entry.name);
+      const button = el('button', 'btn', d.button);
+      button.type = 'button';
+      button.disabled = !d.enabled;
+      button.addEventListener('click', () => installFrom(entry.url, entry.sha256, entry.signature)); // the catalog pins the file with its SHA-256 and carries the signature
+      item.append(head, ' ', button, el('p', 'dlg-hint', d.line));
+      entries.append(item);
+    }
+  });
+  catalogRow.append(catalogUrl, see);
+  online.append(linkRow, catalogRow, entries);
+  const note = el('p', 'dlg-hint');
+  note.id = 'pluginMsg';
+  note.setAttribute('role', 'status');
   const where = el('p', 'dlg-hint');
   where.id = 'pluginFolder';
-  box.append(summary, list, apply, actions, where);
+  box.append(summary, list, apply, actions, make, online, note, where);
+  // the state of each running plugin changes by itself (a frame that stops answering): look again every few seconds, only at those lines
+  const timer = setInterval(async () => {
+    if (!box.isConnected) { clearInterval(timer); return; }
+    const data = await desktop().list().catch(() => null);
+    if (data) paintRuntime(data);
+  }, 3000);
+  return box;
+}
+
+function pluginNote(text) {
+  const note = $('pluginMsg');
+  if (note) note.textContent = text;
+}
+
+/** The two lines of each running plugin: how its frame is doing and what it has done. Refreshed by a timer, without redoing the list. */
+function paintRuntime(data) {
+  const status = (pluginHost() && pluginHost().status()) || [];
+  for (const live of document.querySelectorAll('.plugin-runtime')) {
+    const plugin = data.plugins.find((p) => p.id === live.dataset.plugin);
+    const r = describeRuntime(status.find((s) => s.id === live.dataset.plugin), plugin && plugin.activity);
+    live.textContent = 'Estado: ' + r.state + (r.activity ? ' · ' + r.activity : '');
+    live.classList.toggle('field-error', r.health === 'unresponsive');
+  }
+}
+
+/** The form of the settings a plugin declares: the app draws it, checks it and keeps it; the plugin only reads what is chosen. */
+function settingsForm(plugin) {
+  const box = el('fieldset', 'plugin-settings');
+  box.append(el('legend', '', 'Ajustes de este plugin'));
+  const error = el('p', 'field-error');
+  error.hidden = true;
+  const save = async (field, input, raw) => {
+    const typed = settingValue(field, raw);
+    const res = typed.ok ? await desktop().setConfig(plugin.id, { [field.name]: typed.value }) : typed;
+    error.hidden = !!res.ok;
+    if (!res.ok) { error.textContent = res.error || 'No se pudo guardar.'; input.value = field.value; }
+  };
+  for (const field of plugin.settings) {
+    const row = el('div', 'plugin-setting');
+    const label = el('label', '', field.label);
+    let input;
+    if (field.type === 'boolean') {
+      input = el('input');
+      input.type = 'checkbox';
+      input.checked = field.value === true;
+      input.addEventListener('change', () => save(field, input, input.checked));
+    } else if (field.type === 'choice') {
+      input = el('select');
+      for (const option of field.options) input.append(new Option(option, option));
+      input.value = field.value;
+      input.addEventListener('change', () => save(field, input, input.value));
+    } else {
+      input = el('input');
+      input.type = field.type === 'number' ? 'number' : 'text';
+      if (field.type === 'number') { input.min = field.min; input.max = field.max; input.step = 'any'; } else input.maxLength = field.maxLength;
+      input.value = String(field.value);
+      input.addEventListener('change', () => save(field, input, input.value));
+    }
+    input.id = `set-${plugin.id}-${field.name}`;
+    label.htmlFor = input.id;
+    row.append(label, input);
+    const hint = settingHint(field);
+    if (hint) row.append(el('small', 'dlg-hint', hint));
+    box.append(row);
+  }
+  box.append(error);
   return box;
 }
 
@@ -194,16 +378,67 @@ function paintPlugins(data) {
     box.checked = d.on;
     box.disabled = !d.usable;
     box.addEventListener('change', async () => {
-      paintPlugins(await desktop().setEnabled(plugin.id, box.checked));
-      $('pluginApply').hidden = false;
+      paintPlugins(await desktop().setEnabled(plugin.id, box.checked)); // a plugin with permissions asks first, in a native window
+      $('pluginApply').hidden = !d.needsReload;
     });
     label.append(box, el('strong', '', ' ' + d.title));
     item.append(label);
-    for (const line of [d.description, d.acts, d.source]) if (line) item.append(el('p', 'dlg-hint', line));
+    for (const line of [d.description, d.author, d.screen, d.acts, d.source]) if (line) item.append(el('p', 'dlg-hint', line));
+    if (d.power) item.append(el('p', 'field-error', d.power));
+    if (plugin.kind === 'ui') {
+      const rows = permissionRows(plugin);
+      if (!rows.length) item.append(el('p', 'dlg-hint', 'No pide ningún permiso.'));
+      else {
+        // each permission can be turned off on its own: the plugin starts again with what it may do now
+        const asked = el('ul', 'plugin-perms');
+        asked.append(el('li', 'plugin-perms-head', 'Pide permiso para:'));
+        for (const row of rows) {
+          const li = el('li', 'plugin-perm risk-' + row.risk);
+          const chk = el('label', 'chk');
+          const check = el('input');
+          check.type = 'checkbox';
+          check.checked = row.granted;
+          check.setAttribute('aria-label', row.text);
+          check.addEventListener('change', async () => paintPlugins(await desktop().setPermission(plugin.id, row.name, check.checked)));
+          chk.append(check, ' ' + row.text + ' ', el('small', 'plugin-risk', '(' + row.riskText + ')'));
+          li.append(chk);
+          asked.append(li);
+        }
+        item.append(asked);
+      }
+      if (d.usable && Array.isArray(plugin.settings) && plugin.settings.length) item.append(settingsForm(plugin));
+      if (d.on) {
+        const live = el('p', 'dlg-hint plugin-runtime');
+        live.dataset.plugin = plugin.id;
+        item.append(live);
+        const reload = el('button', 'btn', 'Recargar');
+        reload.type = 'button';
+        reload.title = 'Vuelve a cargar el plugin';
+        reload.addEventListener('click', () => { const host = pluginHost(); if (host) host.reload(plugin.id); });
+        item.append(reload);
+      }
+    }
+    if (d.renewal) item.append(el('p', 'field-error', d.renewal));
+    if ((plugin.kind === 'ui' || plugin.kind === 'full') && d.usable) {
+      const pack = el('button', 'btn', 'Empaquetar para compartir…');
+      pack.type = 'button';
+      pack.title = 'Crea un archivo .tdtplugin con este plugin';
+      pack.addEventListener('click', async () => {
+        const r = await desktop().pack(plugin.id);
+        if (r && r.saved) pluginNote('Guardado en ' + r.saved + '. SHA-256: ' + r.sha256 + ' (publícala junto al archivo para que quien lo instale pueda comprobarlo).');
+        else if (r && r.error) pluginNote('No se pudo empaquetar: ' + r.error);
+      });
+      item.append(pack);
+    }
     for (const problem of d.problems) item.append(el('p', 'field-error', 'No se puede usar: ' + problem));
     list.append(item);
   }
+  paintRuntime(data);
   $('pluginSummary').textContent = summarize(data.plugins);
+  const inSafe = !!data.safeMode; // the button leaves the safe mode when it is on
+  $('pluginSafeButton').textContent = inSafe ? 'Salir del modo seguro' : 'Reiniciar en modo seguro';
+  if (inSafe) $('pluginSafeButton').dataset.safe = '1'; else delete $('pluginSafeButton').dataset.safe;
+  $('pluginSafe').lastChild.textContent = inSafe ? `Modo seguro: ningún plugin corre (${data.safeMode}).` : 'Arranca sin ningún plugin (lo que tienes activado se conserva).';
   $('pluginFolder').textContent = 'Los tuyos van en una carpeta por plugin dentro de: ' + data.folder;
 }
 
@@ -280,6 +515,126 @@ async function loadPlugins() {
   if (desktop()) paintPlugins(await desktop().list());
 }
 
+/* ------------------------------------------------------------ access of AIs (control bus) */
+function controlHelp() {
+  const box = el('div', 'control-help');
+  box.append(el('p', 'dlg-hint dev-warn', CONTROL_INTRO));
+  const status = el('p', 'dlg-hint');
+  status.id = 'controlState';
+  status.setAttribute('role', 'status');
+  const tokenBox = el('div', 'token-box');
+  tokenBox.id = 'controlToken';
+  tokenBox.hidden = true;
+  const input = el('input');
+  input.id = 'controlTokenValue';
+  input.type = 'password';
+  input.readOnly = true;
+  input.setAttribute('aria-label', 'Token de acceso');
+  const button = (text, fn) => {
+    const b = el('button', 'btn', text);
+    b.type = 'button';
+    b.addEventListener('click', fn);
+    return b;
+  };
+  tokenBox.append(
+    input,
+    button('Mostrar', (e) => {
+      input.type = input.type === 'password' ? 'text' : 'password';
+      e.target.textContent = input.type === 'password' ? 'Mostrar' : 'Ocultar';
+    }),
+    button('Copiar', () => navigator.clipboard.writeText(input.value)),
+    button('Generar uno nuevo…', async () => {
+      if (!window.confirm('El token actual dejará de valer: tendrás que poner el nuevo en cada cliente. ¿Seguir?')) return;
+      const res = await requestJson('/api/control/token/regenerate', 'POST').catch(() => null);
+      if (res && res.ok) input.value = res.data.token;
+    }),
+  );
+  const how = el('p', 'dlg-hint', describeUse(location.origin));
+  how.id = 'controlHow';
+  box.append(status, tokenBox, how);
+  return box;
+}
+
+async function loadControl() {
+  const res = await requestJson('/api/control/status').catch(() => null);
+  const status = res && res.ok ? res.data : null;
+  $('controlState').textContent = describeControl(status);
+  const tokenBox = $('controlToken');
+  tokenBox.hidden = !(status && status.enabled);
+  if (!tokenBox.hidden) {
+    const t = await requestJson('/api/control/token').catch(() => null);
+    $('controlTokenValue').value = t && t.ok ? t.data.token : '';
+  }
+}
+
+/* ------------------------------------------------------------ development plugins (desktop app only) */
+function devPanel() {
+  const box = el('div', 'dev');
+  const warn = el('p', 'dlg-hint dev-warn', DEV_INTRO);
+  const mode = el('button', 'btn');
+  mode.type = 'button';
+  mode.id = 'devMode';
+  mode.addEventListener('click', async () => {
+    const view = await desktopDev().state();
+    paintDev(await desktopDev().setMode(!view.mode)); // turning it on ends in a native question that this page cannot answer
+  });
+  const summary = el('p', 'dlg-hint');
+  summary.id = 'devSummary';
+  summary.setAttribute('role', 'status');
+  const list = el('ul', 'plugin-list');
+  list.id = 'devList';
+  const actions = el('div', 'plugin-actions');
+  actions.id = 'devActions';
+  const open = el('button', 'btn', 'Abrir la carpeta de plugins de desarrollo');
+  open.type = 'button';
+  open.addEventListener('click', () => desktopDev().openFolder());
+  const rescan = el('button', 'btn', 'Buscar de nuevo');
+  rescan.type = 'button';
+  rescan.addEventListener('click', async () => paintDev(await desktopDev().rescan()));
+  actions.append(open, rescan);
+  const where = el('p', 'dlg-hint');
+  where.id = 'devFolder';
+  box.append(warn, mode, summary, list, actions, where);
+  return box;
+}
+
+function paintDev(view) {
+  if (!view) return;
+  window.dispatchEvent(new Event('tdt-dev-changed')); // the permanent notice reads the state again
+  $('devMode').textContent = view.mode ? 'Apagar el modo desarrollador' : 'Activar el modo desarrollador…';
+  $('devMode').disabled = view.mode && view.forced;
+  $('devSummary').textContent = summarizeDev(view) + (view.forced ? ' (encendido por TDT_DEV: desde aquí no se apaga)' : '');
+  $('devActions').hidden = !view.mode;
+  $('devFolder').textContent = view.mode
+    ? 'Cada plugin es una carpeta con un manifest.json («tdt.dev») y un page.js y/o un main.js, dentro de: ' + view.folder
+      + '. Se recargan solos al cambiar un archivo. Detalle en docs/PLUGINS.md.'
+    : '';
+  const list = $('devList');
+  list.replaceChildren();
+  for (const plugin of view.plugins) {
+    const d = describeDevPlugin(plugin);
+    const item = el('li', 'plugin' + (d.usable ? '' : ' broken'));
+    const label = el('label', 'chk');
+    const box = el('input');
+    box.type = 'checkbox';
+    box.checked = d.on;
+    box.disabled = !d.usable;
+    box.addEventListener('change', async () => {
+      paintDev(await desktopDev().approve(plugin.id, box.checked)); // on: a native question first
+    });
+    label.append(box, el('strong', '', ' ' + d.title));
+    item.append(label);
+    for (const line of [d.description, d.acts, 'Estado: ' + d.status + '.']) if (line) item.append(el('p', 'dlg-hint', line));
+    for (const problem of d.problems) item.append(el('p', 'field-error', 'No se puede usar: ' + problem));
+    if (d.error) item.append(el('p', 'field-error', 'Error: ' + d.error));
+    list.append(item);
+  }
+}
+
+async function loadDev() {
+  if (desktopDev()) paintDev(await desktopDev().state());
+}
+
 function link(href, text) {
   const a = el('a', '', text);
   a.href = href;
@@ -304,8 +659,8 @@ function build() {
     panel.id = 'panel_' + tab.id;
     panel.setAttribute('role', 'tabpanel');
     panel.setAttribute('aria-labelledby', button.id);
-    if (tab.id === 'plugins' || tab.id === 'logs') { // not server settings: they talk to the app
-      panel.append(tab.id === 'plugins' ? pluginsPanel() : logsPanel());
+    if (tab.id === 'plugins' || tab.id === 'logs' || tab.id === 'dev') { // not server settings: they talk to the app
+      panel.append(tab.id === 'plugins' ? pluginsPanel() : tab.id === 'logs' ? logsPanel() : devPanel());
       panels.append(panel);
       continue;
     }
@@ -318,6 +673,7 @@ function build() {
     if (tab.id === 'stt') panel.prepend(helpBlock());
     if (tab.id === 'scte') panel.prepend(scteHelp());
     if (tab.id === 'ads') panel.prepend(adsHelp());
+    if (tab.id === 'control') panel.prepend(controlHelp());
     if (advanced.children.length > 1) panel.append(advanced);
     const reset = el('button', 'btn reset', 'Restaurar valores de esta pestaña');
     reset.type = 'button';
@@ -416,6 +772,8 @@ async function save(e) {
   }
   fill(res.data.settings);
   say('Guardado. Los cambios ya están en uso.');
+  window.dispatchEvent(new Event('tdt-control-changed'));
+  loadControl();
   loadModels();
   await hooks.reload();
 }
@@ -547,6 +905,8 @@ async function open() {
   loadModels();
   loadPlugins();
   loadLogs();
+  loadDev();
+  loadControl();
 }
 
 /**

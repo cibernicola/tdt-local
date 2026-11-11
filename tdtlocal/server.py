@@ -15,8 +15,14 @@ from . import __version__, u7d
 from .ads import web_origin
 from .ai import ModelError
 from .app import App
+from .control_routes import MAX_CONTROL_BODY
+from .control_routes import handle_get as control_get
+from .control_routes import handle_post as control_post
+from .headers_routes import headers_get, headers_post
 from .hls import rewrite_playlist
 from .net import Blocked
+from .providers_routes import providers_get, providers_post
+from .rules_routes import rules_get, rules_post
 from .scte_routes import handle_get as scte_get
 from .scte_routes import handle_post as scte_post
 from .settings_routes import handle_get, handle_post
@@ -35,9 +41,9 @@ CONTENT_TYPES = {
     ".json": "application/json",
 }
 CSP = (
-    "default-src 'self'; img-src 'self' data:; media-src 'self' blob: data:; connect-src 'self'; "
-    "worker-src 'self' blob:; script-src 'self'; style-src 'self'; base-uri 'none'; "
-    "frame-src https://www.youtube-nocookie.com https://www.youtube.com https://www.atresplayer.com{web}; "
+    "default-src 'self'; img-src 'self' data:; font-src 'self' data:; media-src 'self' blob: data:; "
+    "connect-src 'self'; worker-src 'self' blob:; script-src 'self'; style-src 'self'; base-uri 'none'; "
+    "frame-src tdt-plugin: https://www.youtube-nocookie.com https://www.youtube.com https://www.atresplayer.com{web}; "
     "form-action 'none'; frame-ancestors 'none'"
 )
 MAX_BODY = 16384
@@ -110,11 +116,11 @@ class Handler(BaseHTTPRequestHandler):
     def _json(self, code: int, obj: Any) -> None:
         self._send(code, json.dumps(obj, ensure_ascii=False).encode("utf-8"), extra={"Cache-Control": "no-store"})
 
-    def _body(self) -> dict[str, Any]:
+    def _body(self, limit: int = MAX_BODY) -> dict[str, Any]:
         self._body_read = True
         try:
             length = int(self.headers.get("Content-Length") or 0)
-            if 0 < length <= MAX_BODY:
+            if 0 < length <= limit:
                 data = json.loads(self.rfile.read(length).decode("utf-8"))
                 return data if isinstance(data, dict) else {}
         except (ValueError, UnicodeDecodeError):
@@ -153,7 +159,14 @@ class Handler(BaseHTTPRequestHandler):
 
         app = self.app
         path = parts.path
-        if handle_get(self, path) or scte_get(self, path):
+        if (
+            handle_get(self, path)
+            or scte_get(self, path)
+            or control_get(self, path)
+            or headers_get(self, path)
+            or rules_get(self, path)
+            or providers_get(self, path)
+        ):
             return
         if path == "/api/channels":
             self._json(200, app.channels_payload())
@@ -199,7 +212,7 @@ class Handler(BaseHTTPRequestHandler):
         """
         try:
             length = int(self.headers.get("Content-Length") or 0)
-            if 0 < length <= MAX_BODY:
+            if 0 < length <= MAX_CONTROL_BODY:  # also the bigger bodies of the routes that need the token
                 self.connection.settimeout(5)
                 self.rfile.read(length)
         except (ValueError, OSError):
@@ -211,7 +224,14 @@ class Handler(BaseHTTPRequestHandler):
         parts = urllib.parse.urlsplit(self.path)
         app = self.app
         path = parts.path
-        if handle_post(self, path) or scte_post(self, path):
+        if (
+            handle_post(self, path)
+            or scte_post(self, path)
+            or control_post(self, path)
+            or headers_post(self, path)
+            or rules_post(self, path)
+            or providers_post(self, path)
+        ):
             return
         if path == "/api/stt":
             if not app.transcriber.available():
@@ -342,13 +362,16 @@ class Handler(BaseHTTPRequestHandler):
         headers = {}
         if self.headers.get("Range"):
             headers["Range"] = self.headers["Range"]
-        headers.update(app.store.custom_headers.get(channel_tag, {}))
+        headers.update(
+            app.store.headers_for(channel_tag, url)
+        )  # credentials only to the hosts of the channel's own links
         try:
-            response = app.net.open(url, headers, True, 20)
+            response = app.net.open(url, headers, True, 20, app.store.credential_names(channel_tag))
         except Blocked as exc:
             self._json(403, {"error": str(exc)})
             return
         except urllib.error.HTTPError as exc:
+            _close_quietly(exc)
             self._json(exc.code if 400 <= exc.code < 600 else 502, {"error": f"origen: HTTP {exc.code}"})
             return
         except Exception as exc:
@@ -367,7 +390,7 @@ class Handler(BaseHTTPRequestHandler):
                     head = response.read(7)
                     is_playlist = head == b"#EXTM3U"
                 if is_playlist:
-                    text = (head + response.read(MAX_PLAYLIST)).decode("utf-8", "replace").lstrip("﻿")
+                    text = (head + response.read(MAX_PLAYLIST)).decode("utf-8", "replace").lstrip("\ufeff")
                     app.scte.observe(final, text, channel_tag)
                     out = rewrite_playlist(text, final, channel_tag, session_tag, on_url=app.net.allow)
                     self._send(200, out.encode("utf-8"), PLAYLIST_TYPE, {"Cache-Control": "no-store"})

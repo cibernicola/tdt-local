@@ -1,0 +1,12 @@
+{
+  "id": "ads",
+  "name": "Reacción a la publicidad",
+  "version": "1.0.0",
+  "description": "Lo que se hace cuando hay una pausa de anuncios, según lo elegido en Ajustes: cartel, bajar o silenciar el sonido, cambiar de canal o enseñar una web, y avisar. Cualquier otro plugin puede añadir, cambiar o reemplazar pasos.",
+  "included": true,
+  "page": "page.js",
+  "adds": {
+    "filters": ["ad.reaction"],
+    "registries": { "ad.actions": ["flag", "audio", "channel", "web", "notice"] }
+  }
+}

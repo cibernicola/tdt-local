@@ -28,6 +28,7 @@ if TYPE_CHECKING:
 DAYS = 7
 CACHE_SECONDS = 600  # a listing changes slowly
 MAX_ITEMS = 400
+MAX_JSON = 4_000_000  # a week of one channel is a few hundred KB: more than this is not a schedule
 REF = re.compile(r"[\w.-]{1,80}")
 
 RTVE_SCHEDULE = "https://www.rtve.es/api/schedule/{slug}.json?pastDays=" + str(DAYS) + "&nextDays=0"
@@ -159,7 +160,10 @@ def parse_rtve(data: dict[str, Any]) -> list[dict[str, Any]]:
 
 def _get_json(net: Net, url: str) -> dict[str, Any]:
     with net.open(url, {"Accept": "application/json"}, False, 20) as resp:
-        data = json.load(resp)
+        raw = resp.read(MAX_JSON + 1)
+    if len(raw) > MAX_JSON:
+        raise ValueError("la respuesta es demasiado grande")
+    data = json.loads(raw)
     return data if isinstance(data, dict) else {}
 
 

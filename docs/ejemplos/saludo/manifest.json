@@ -1,0 +1,13 @@
+{
+  "name": "Saludo",
+  "version": "0.1.0",
+  "description": "Un panel que dice qué estás viendo y tiene un botón para saludar. El plugin más pequeño que hace algo.",
+  "author": "TDT local (ejemplo)",
+  "tdt": {
+    "api": 1,
+    "entry": "index.html",
+    "label": "Saludo",
+    "panel": { "width": 300, "height": 150 },
+    "permissions": ["player.read", "ui.toast"]
+  }
+}

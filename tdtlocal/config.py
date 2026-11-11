@@ -91,6 +91,11 @@ class Config:
     ad_unknown_seconds: int = 120  # assumed length of a break that does not say how long it lasts
     ad_on_touch: str = "respect"  # volume or channel changed by hand during a break: "respect" it or "restore" after
 
+    # the control bus (see control.py): lets an AI or a plugin see what is on and ask the page to do things
+    control_enabled: bool = False
+    # "read" (what is on), "control" (also play, volume...) or "dev" (also development plugins: code that runs)
+    control_level: str = "read"
+
     allow_private: bool = False  # tests only: lets the proxy reach loopback/private addresses
     # settings fixed by a command-line flag or environment variable: the saved value is ignored
     # and the interface shows them read-only

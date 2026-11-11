@@ -8,15 +8,19 @@ from typing import Any
 from . import __version__, ads, u7d
 from .ai import Assistant
 from .config import Config
+from .control import ControlBus
 from .epg import EpgSyncer
 from .feeds import FeedSyncer
 from .health import HealthChecker
+from .hooks import Hooks
 from .logos import LogoCache
 from .net import Net
+from .rules import RulesStore
 from .scte_watch import ScteWatcher
 from .settings import BY_NAME, SettingsStore
 from .store import Store, channel_ok, source_ok
 from .stt import Transcriber
+from .trusted import Loader
 from .u7d import U7d
 from .whisper_models import ModelDownloader
 
@@ -29,13 +33,18 @@ class App:
         self.settings = SettingsStore(config)
         self.settings.load()  # before the services: they read the configuration when they are created
         self.stop = threading.Event()
+        self.hooks = Hooks()  # what the application lets others look at, change or replace (docs/HACKEABLE.md)
+        self.trusted = Loader(self.hooks)  # the plugins with all the power that run in the server
         self.net = Net(allow_private=config.allow_private)
         self.store = Store(config, self.net)
         self.feeds = FeedSyncer(config, self.store, self.net)
         self.epg = EpgSyncer(config, self.store, self.net)
         self.health = HealthChecker(self.store, self.net, stop=self.stop)
         self.u7d = U7d(self.net, self._allow_cover)
-        self.scte = ScteWatcher(config, self.store, self.net)
+        self.scte = ScteWatcher(config, self.store, self.net, hooks=self.hooks)
+        self.control = ControlBus(config)
+        self.rules = RulesStore(config.data_dir / "rules.json")
+        self.rules.load()
         self.assistant = Assistant(config, self.store)
         self.transcriber = Transcriber(config)
         self.models = ModelDownloader(config, self.net)
@@ -46,6 +55,7 @@ class App:
         self.config.data_dir.mkdir(parents=True, exist_ok=True)
         self.store.load()
         self.scte.load()
+        self.control.announce()
         threading.Thread(target=self.feeds.run, args=(self.stop, self._after_sync), daemon=True, name="feeds").start()
         threading.Thread(target=self.epg.run, args=(self.stop,), daemon=True, name="epg").start()
         threading.Thread(target=self.scte.run, args=(self.stop,), daemon=True, name="scte").start()
@@ -68,6 +78,7 @@ class App:
 
     def close(self) -> None:
         self.stop.set()
+        self.control.close()
         self.transcriber.close()
 
     def allow_covers(self, urls: Any) -> int:
@@ -100,6 +111,7 @@ class App:
                 item = {k: v for k, v in ch.items() if k not in ("fmts", "headers")}
                 item["sources"], item["ok"] = sources, channel_ok(ch, status)
                 item["kind"] = item.get("kind") or "tv"
+                item["hdr"] = ch["id"] in store.custom_headers  # the page then tells the proxy whose headers to use
                 out.append(item)
         meta.pop("etag", None)
         meta["radio"] = radio

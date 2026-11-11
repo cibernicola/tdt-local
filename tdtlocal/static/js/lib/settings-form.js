@@ -6,6 +6,7 @@ export const TABS = [
   { id: 'lists', label: 'Listas y guía' },
   { id: 'scte', label: 'Marcas de anuncios' },
   { id: 'ads', label: 'Durante la publicidad' },
+  { id: 'control', label: 'Acceso de IAs' },
 ];
 
 export const SCTE_SCOPES = {
@@ -24,6 +25,12 @@ export const AD_SCREEN = {
   keep: 'Dejar la imagen como está',
   channel: 'Cambiar a otro canal',
   web: 'Mostrar una web sobre la imagen',
+};
+
+export const CONTROL_LEVELS = {
+  read: 'Solo leer: qué estoy viendo y qué canales hay',
+  control: 'Leer y controlar: poner canales, multivisión y volumen',
+  dev: 'Además, escribir plugins de desarrollo: código que se ejecuta en tu equipo',
 };
 
 export const AD_TOUCH = {
@@ -109,6 +116,11 @@ export const FIELDS = [
   { name: 'ad_unknown_seconds', tab: 'ads', type: 'number', step: 5, label: 'Duración que suponer si la marca no la dice (segundos)',
     hint: 'La reacción termina antes si llega la marca de fin de pausa. Solo manda cuando se cambia de canal en multivisión.' },
   { name: 'ad_on_touch', tab: 'ads', type: 'select', label: 'Si cambio el volumen o el canal durante la pausa', options: AD_TOUCH },
+  { name: 'control_enabled', tab: 'control', type: 'bool', label: 'Dejar que una IA vea y controle TDT local',
+    hint: 'Apagado por defecto. Solo desde este equipo y con un token.' },
+  { name: 'control_level', tab: 'control', type: 'select', label: 'Qué puede hacer', options: CONTROL_LEVELS,
+    hint: 'El último nivel solo sirve en la aplicación de escritorio y con el modo desarrollador encendido. Cada cambio de '
+      + 'código y cada activación te los pregunta la propia ventana, con el código a la vista.' },
 ];
 
 export const fieldsOf = (tab) => FIELDS.filter((f) => f.tab === tab);

@@ -139,6 +139,7 @@ button, input, select { font: inherit; color: inherit; }
 .tile-yt { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #000; }
 .tile.yt video { display: none; }
 .tile-hit { position: absolute; inset: 0; z-index: 1; display: none; cursor: pointer; }
+.tile-overlays { position: absolute; inset: 0; z-index: 5; pointer-events: none; } /* the layers of the plugins: over the picture and the bar, every click goes through (a layer asks for clicks with pointer-events: auto) */
 .tiles.multi .tile.yt:not(.main) .tile-hit { display: block; }
 
 /* diálogo de canal propio */
@@ -392,8 +393,81 @@ a.btn { display: inline-block; text-decoration: none; color: inherit; }
 .plugin .dlg-hint { margin: 2px 0 0 22px; }
 .plugin-actions { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
 .plugin-apply[hidden] { display: none; }
+.plugin-actions[hidden] { display: none; }
+.dev-warn { border-left: 3px solid #b3261e; padding-left: 8px; }
+.dev-banner { position: fixed; top: 0; left: 50%; transform: translateX(-50%); z-index: 60; padding: 1px 14px 2px;
+  border-radius: 0 0 6px 6px; background: #b3261e; color: #fff; font: 600 12px/1.6 system-ui, sans-serif; pointer-events: none; }
+.dev-banner[hidden] { display: none; }
+.safe-banner { position: fixed; bottom: 8px; left: 50%; transform: translateX(-50%); z-index: 60; padding: 6px 12px; border-radius: 8px; background: var(--accent); color: var(--accent-ink); font-size: 13px; box-shadow: 0 2px 10px rgba(0, 0, 0, .35); max-width: calc(100vw - 24px); }
+.safe-banner .btn { margin-left: 8px; }
+.ai-badge { position: fixed; top: 0; left: 10px; z-index: 60; padding: 1px 12px 2px; border-radius: 0 0 6px 6px;
+  background: #1b5e8a; color: #fff; font: 600 12px/1.6 system-ui, sans-serif; }
+.ai-badge[hidden] { display: none; }
+.token-box { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 6px 0; }
+.token-box input { flex: 1 1 22em; font-family: ui-monospace, Consolas, monospace; }
 .log-view { margin: 8px 0; padding: 8px 10px; max-height: 18rem; overflow: auto; white-space: pre-wrap; word-break: break-word;
   font: 12px/1.45 ui-monospace, Consolas, monospace; background: var(--chassis); border: 1px solid var(--line); border-radius: 6px; }
+
+.plugin-perms { margin: 2px 0 6px; padding: 0; list-style: none; font-size: 13px; color: var(--muted); }
+.plugin-perms-head { font-weight: 600; }
+.plugin-perm .chk { display: inline-flex; gap: 6px; align-items: baseline; }
+.plugin-perm.risk-high .plugin-risk { color: var(--bad); font-weight: 600; }
+.plugin-perm.risk-medium .plugin-risk { color: var(--muted); }
+.plugin-runtime { margin: 4px 0; }
+.plugin-badge { padding: 0 8px; border-radius: 10px; background: #b3261e; color: #fff; font: 600 11px/1.7 var(--font); white-space: nowrap; }
+.plugin-badge[hidden] { display: none; }
+.plugin-screen { position: absolute; inset: 0; z-index: 8; display: flex; flex-direction: column; background: transparent; } /* the plugin paints its own background: opaque, or none to let the picture through */
+.plugin-screen[hidden] { display: none; }
+.plugin-screen-head { display: flex; align-items: center; gap: 8px; padding: 4px 8px 4px 12px; background: #1d2220; color: #e9ece6;
+  border-bottom: 1px solid #3a413d; font: 600 12px/1.6 var(--font); }
+.plugin-screen-head .plugin-btn { color: #e9ece6; border: 1px solid #6d746f; padding: 1px 10px; }
+.plugin-note { flex: 1; opacity: .6; font-weight: 400; }
+.plugin-screen-frame { flex: 1; width: 100%; border: 0; min-height: 0; background: transparent; }
+.hdr-rows { display: grid; gap: 6px; margin: 6px 0; }
+.hdr-row { display: grid; grid-template-columns: 11em 1fr auto; gap: 6px; align-items: center; }
+.hdr-row input { min-width: 0; }
+.plugin-settings { margin: 8px 0 4px 22px; padding: 6px 10px 8px; border: 1px solid var(--line, rgba(255, 255, 255, .15)); border-radius: 6px; }
+.plugin-settings legend { font-size: 12px; color: var(--muted); padding: 0 4px; }
+.plugin-setting { display: grid; grid-template-columns: minmax(8em, 14em) 1fr; gap: 2px 10px; align-items: center; margin: 4px 0; }
+.plugin-setting small { grid-column: 2; margin: 0; }
+.hdr-tools { display: flex; gap: 8px; flex-wrap: wrap; margin: 4px 0; }
+.ins-log { list-style: none; margin: 8px 0; padding: 0; max-height: 50vh; overflow-y: auto; font: 12px/1.5 ui-monospace, Consolas, monospace; }
+.ins-log li { padding: 1px 4px; overflow-wrap: anywhere; }
+.ins-log li.bad { color: var(--bad); }
+.ins-log li.ins-call { color: var(--muted); }
+.ins-log li.ins-call.bad { color: var(--bad); }
+.plugin-online { margin: 8px 0; }
+.plugin-online summary { cursor: pointer; }
+.plugin-online input { flex: 1 1 14em; min-width: 0; }
+.catalog-list { list-style: none; margin: 6px 0; padding: 0; display: grid; gap: 6px; }
+.catalog-item { padding: 6px 8px; border-radius: 6px; background: var(--panel); }
+.catalog-item .dlg-hint { margin: 2px 0 0; }
+.theme-pick select { margin-left: 6px; max-width: 60%; }
+.rules-list { list-style: none; margin: 6px 0; padding: 0; display: grid; gap: 4px; font-size: 13px; }
+.rules-list li { padding: 6px 8px; border-radius: 6px; background: var(--panel-2, rgba(255, 255, 255, .05)); overflow-wrap: anywhere; }
+.rules-list li.off { opacity: .55; }
+.rules-list li.empty { color: var(--muted); background: none; padding-left: 0; }
+.rules-label { display: block; font-size: 12px; color: var(--muted); margin: 8px 0 4px; }
+.rules-text { width: 100%; box-sizing: border-box; font: 12px/1.45 ui-monospace, Consolas, monospace; resize: vertical; }
+.rules-history { margin: 6px 0; font-size: 12px; color: var(--muted); }
+.rules-history pre { white-space: pre-wrap; margin: 6px 0 0; }
+/* Plugins with permissions (desktop app): panels over the player, each in a frame without origin of its own */
+.plugin-dock { position: fixed; left: 12px; top: 12px; z-index: 50; display: flex; flex-direction: column; gap: 8px; align-items: flex-start;
+  max-height: calc(100vh - 24px); overflow: auto; pointer-events: none; }
+.plugin-dock[hidden], .plugin-hidden[hidden] { display: none; }
+.plugin-panel { pointer-events: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; overflow: hidden;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, .35); }
+.plugin-head { display: flex; align-items: center; gap: 4px; padding: 2px 4px 2px 10px; background: var(--chassis); border-bottom: 1px solid var(--line);
+  font: 600 12px/1.6 var(--font); color: var(--ink); }
+.plugin-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.plugin-btn { border: 0; background: transparent; color: var(--ink); cursor: pointer; padding: 0 6px; font: inherit; border-radius: 4px; }
+.plugin-btn:hover { background: var(--row-hover); }
+.plugin-frame { display: block; border: 0; background: transparent; color-scheme: normal; max-width: 100%; }
+.plugin-panel.folded .plugin-frame { display: none; }
+.plugin-panel.folded .plugin-head { border-bottom: 0; }
+.plugin-toasts { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); z-index: 70; display: flex; flex-direction: column; gap: 6px;
+  align-items: center; pointer-events: none; }
+.plugin-toast { padding: 6px 14px; border-radius: 6px; background: #1d2220; color: #fff; font: 13px/1.4 var(--font); box-shadow: 0 2px 10px rgba(0, 0, 0, .4); }
 
 /* U7D: header of a channel's programmes, stuck to the top of the list, and 16:9 thumbnails */
 .list li.u7d-head { display: flex; gap: 10px; align-items: center; padding: 8px 10px; position: sticky; top: 0; z-index: 1;

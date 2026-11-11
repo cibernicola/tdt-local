@@ -2,13 +2,11 @@
 import { postJson } from './api.js';
 import { $ } from './dom.js';
 import { parseAddLink } from './lib/addlink.js';
+import { ATRES_HEADERS } from './lib/headers.js';
 import { GROUPS, atresWeb, missingOf } from './lib/embeds.js';
 import { parseAlertWords } from './lib/alerts.js';
 import { cur, state } from './state.js';
 import { store } from './store.js';
-
-// Headers some providers check before serving a stream. They are sent by the proxy, nothing more.
-const ATRES_HEADERS = { Origin: 'https://www.atresplayer.com', Referer: 'https://www.atresplayer.com/directos/lasexta/' };
 
 let hooks = null;
 

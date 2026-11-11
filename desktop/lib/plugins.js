@@ -9,6 +9,8 @@
 // permissions (a manifest that does is refused), and its scripts are read from its own folder, never from the network.
 import { existsSync, mkdirSync, readFileSync, readdirSync, realpathSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
+import { readUiPlugin } from './plugin-api.js';
+import { readFullPlugin } from './plugin-full.js';
 
 export const MAX_SCRIPT_BYTES = 2 * 1024 * 1024;
 // An address that is TDT local itself or this machine: a plugin acts on other people's pages, not on the app's own.
@@ -47,7 +49,7 @@ export function parsePattern(pattern) {
 }
 
 /** Is this script path inside the plugin's folder (no `..`, no absolute path, no link that leaves it)? */
-function insideOf(dir, file) {
+export function insideOf(dir, file) {
   if (typeof file !== 'string' || !file || file.includes('\0')) return null;
   const full = resolve(dir, file);
   if (!existsSync(full)) return null;
@@ -63,7 +65,7 @@ function insideOf(dir, file) {
  */
 export function readPlugin(dir) {
   const id = dir.split(/[\\/]/).filter(Boolean).pop();
-  const plugin = { id, dir, name: id, version: '', description: '', source: '', sites: [], rules: [], problems: [] };
+  const plugin = { id, dir, kind: 'script', name: id, version: '', description: '', source: '', sites: [], rules: [], problems: [] };
   let manifest;
   try {
     manifest = JSON.parse(readFileSync(join(dir, 'manifest.json'), 'utf8'));
@@ -78,6 +80,15 @@ export function readPlugin(dir) {
   plugin.name = String(manifest.name || id).slice(0, 120);
   plugin.version = String(manifest.version || '');
   plugin.description = String(manifest.description || '').slice(0, 400);
+  if (manifest.tdt && typeof manifest.tdt === 'object' && manifest.tdt.full !== undefined) {
+    return readFullPlugin(manifest, dir, plugin, { insideOf, maxBytes: MAX_SCRIPT_BYTES }); // a plugin with all the power (lib/plugin-full.js)
+  }
+  if (manifest.tdt && typeof manifest.tdt === 'object' && manifest.tdt.api !== undefined && manifest.tdt.dev === undefined) {
+    return readUiPlugin(manifest, dir, plugin, insideOf);
+  }
+  if (manifest.tdt && typeof manifest.tdt === 'object' && manifest.tdt.dev !== undefined) {
+    plugin.problems.push('es un plugin de desarrollo: solo se carga desde la carpeta de desarrollo, con el modo desarrollador');
+  }
   for (const key of ['permissions', 'host_permissions', 'optional_permissions', 'background', 'externally_connectable']) {
     const value = manifest[key];
     if (value !== undefined && !(Array.isArray(value) && value.length === 0)) {

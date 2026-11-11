@@ -1,0 +1,9 @@
+{
+  "name": "Hola desde un plugin de desarrollo",
+  "version": "0.1.0",
+  "description": "Ejemplo: pone una etiqueta en la página y escribe en el Registro desde la página y desde el proceso principal.",
+  "tdt": {
+    "api": 0,
+    "dev": { "page": "page.js", "main": "main.js" }
+  }
+}

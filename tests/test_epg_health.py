@@ -42,6 +42,12 @@ class XmltvTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             parse_xmltv(evil)
 
+    def test_a_document_in_utf16_cannot_hide_an_entity_declaration(self):
+        evil = '<?xml version="1.0" encoding="UTF-16"?><!DOCTYPE tv [<!ENTITY a "aaaa">]><tv>&a;</tv>'.encode("utf-16")
+        self.assertNotIn(b"<!entity", evil.lower())  # the plain byte check cannot see it
+        with self.assertRaises(ValueError):
+            parse_xmltv(evil)
+
     def test_malformed_xml(self):
         import xml.etree.ElementTree as ET
 

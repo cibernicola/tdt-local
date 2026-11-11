@@ -111,7 +111,7 @@ class CustomEntryTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             build_custom_entry({"name": "", "web": "https://www.mediasetinfinity.es/directo/telecinco/"})
 
-    def test_headers_are_whitelisted_and_cannot_inject_lines(self):
+    def test_headers_are_checked_and_cannot_inject_lines(self):
         e = build_custom_entry(
             {
                 "name": "X",
@@ -120,11 +120,13 @@ class CustomEntryTests(unittest.TestCase):
                     "Origin": "https://o.example",
                     "Referer": "https://o.example/\r\nX-Evil: 1",
                     "Cookie": "a=b",
+                    "Host": "otro.example",
                     "User-Agent": 5,
                 },
             }
         )
-        self.assertEqual(e["headers"], {"Origin": "https://o.example"})
+        # any valid name is kept; a value with a line break, one that is not text and transport headers are dropped
+        self.assertEqual(e["headers"], {"Origin": "https://o.example", "Cookie": "a=b"})
 
     def test_radio_guesses_formats(self):
         e = build_custom_entry(

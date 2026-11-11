@@ -5,15 +5,14 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from . import headers as hdr
 from .parser import Channel
 from .util import slugify
 
 YOUTUBE = re.compile(r"^https?://(?:www\.|m\.)?(?:youtube\.com|youtube-nocookie\.com|youtu\.be)/", re.I)
 HTTP_URL = re.compile(r"https?://\S+$")
-CUSTOM_HEADERS = ("Origin", "Referer", "User-Agent")
 MAX_SOURCES = 6
 MAX_EPG_ID = 80
-MAX_HEADER_LEN = 300
 
 
 def is_youtube(url: str | None) -> bool:
@@ -27,16 +26,6 @@ def guess_fmt(url: str) -> str:
         return "stream"
     ext = match.group(1).lower()
     return "m3u8" if ext == "m3u" else ext
-
-
-def _clean_headers(raw: Any) -> dict[str, str]:
-    headers: dict[str, str] = {}
-    source = raw if isinstance(raw, dict) else {}
-    for key in CUSTOM_HEADERS:
-        value = source.get(key)
-        if isinstance(value, str) and 0 < len(value) <= MAX_HEADER_LEN and "\r" not in value and "\n" not in value:
-            headers[key] = value
-    return headers
 
 
 def build_custom_entry(data: Any) -> Channel:
@@ -71,5 +60,5 @@ def build_custom_entry(data: Any) -> Channel:
         "epg": epg,
         "tags": [],
         "custom": True,
-        "headers": _clean_headers(data.get("headers")),
+        "headers": hdr.clean(data.get("headers")),
     }

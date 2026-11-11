@@ -145,7 +145,7 @@ class RouteTests(ServerCase):
         return self.request("GET", "/")[1]["content-security-policy"]
 
     def test_the_csp_lets_in_only_the_chosen_web(self):
-        base = "frame-src https://www.youtube-nocookie.com https://www.youtube.com https://www.atresplayer.com"
+        base = "https://www.youtube-nocookie.com https://www.youtube.com https://www.atresplayer.com"
         self.assertIn(base + ";", self.csp())
         self.post_json(
             "/api/settings",

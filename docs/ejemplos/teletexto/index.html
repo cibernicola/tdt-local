@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Teletexto</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="ttx">
+    <canvas class="ttx-screen" id="pantalla" role="img" aria-label="Pantalla de teletexto"></canvas>
+    <div class="ttx-remote">
+      <form id="formPagina" autocomplete="off">
+        <label>Página
+          <input id="pagina" type="text" inputmode="numeric" maxlength="3" pattern="[1-8][0-9]{2}" placeholder="100" aria-describedby="mensaje">
+        </label>
+        <button type="submit">Ir</button>
+      </form>
+      <div class="seg" role="group" aria-label="Página anterior o siguiente">
+        <button type="button" id="anterior" title="Página anterior (↓)">‹ Página</button>
+        <button type="button" id="siguiente" title="Página siguiente (↑)">Página ›</button>
+      </div>
+      <div class="seg" role="group" aria-label="Subpáginas">
+        <button type="button" id="subAnterior" title="Subpágina anterior (←)">‹</button>
+        <span class="ttx-sub" id="sub" role="status"></span>
+        <button type="button" id="subSiguiente" title="Subpágina siguiente (→)">›</button>
+      </div>
+      <div class="ttx-colores" role="group" aria-label="Teclas de color">
+        <button type="button" class="rojo" id="rojo" title="Rojo (R)"><span>Rojo</span><small></small></button>
+        <button type="button" class="verde" id="verde" title="Verde (V)"><span>Verde</span><small></small></button>
+        <button type="button" class="amarillo" id="amarillo" title="Amarillo (A)"><span>Amarillo</span><small></small></button>
+        <button type="button" class="azul" id="azul" title="Azul (Z)"><span>Azul</span><small></small></button>
+      </div>
+      <div class="ttx-secciones" role="group" aria-label="Secciones">
+        <button type="button" id="indice" title="Índice (I)">Índice</button>
+        <button type="button" data-ttx="101">Portada</button>
+        <button type="button" data-ttx="200">Deportes</button>
+        <button type="button" data-ttx="300">Economía</button>
+        <button type="button" data-ttx="400">El tiempo</button>
+        <button type="button" data-ttx="500">Televisión ahora</button>
+      </div>
+      <button type="button" id="actualizar">Actualizar páginas</button>
+      <p class="ttx-estado" id="estado" role="status"></p>
+      <p class="ttx-estado" id="mensaje" role="status"></p>
+    </div>
+  </div>
+  <script src="/@tdt/sdk.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
