@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-22.04, windows-latest]  # the newest Ubuntu has no Python 3.9 for setup-python
         python: ["3.9", "3.11", "3.13"]
         include:
           # the installers are built for macOS too, so the tests must run there

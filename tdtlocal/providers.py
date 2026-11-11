@@ -105,7 +105,7 @@ def clean_guide(provider: str, raw: Any, now: float) -> dict[str, list[list[Any]
             if not isinstance(title, str) or not title.strip() or len(title) > 200:
                 raise ValueError(f"{at}: el título es un texto de hasta 200 caracteres")
             extras = []
-            for value, limit in zip(item[3:], (500, 60), strict=False):
+            for value, limit in zip(item[3:], (500, 60)):
                 if value is not None and (not isinstance(value, str) or len(value) > limit):
                     raise ValueError(f"{at}: descripción (500) y categoría (60) son textos cortos")
                 extras.append((value or "").strip())
