@@ -1,7 +1,7 @@
 # Aplicación de escritorio con ventana propia y plugins (esbozo de diseño)
 
 > **Estado: en `desktop/`, empaquetada desde la 1.3.0.** Ventana de Electron con el servidor congelado dentro, bandeja,
-> plugins (con el puente de Atresplayer como primero) y Registro. Los instaladores la llevan; sigue siendo joven (sin
+> plugins (con el puente de Atresplayer como primero) y Registro. **La sección «Plugins» de abajo es el diseño del primer prototipo; el estado actual de los plugins (cuatro clases, ganchos, temas, capas, modo seguro) está en [PLUGINS.md](PLUGINS.md#dónde-estamos-hoy-150) y [HACKEABLE.md](HACKEABLE.md).** Los instaladores la llevan; sigue siendo joven (sin
 > firmar, sin actualizaciones automáticas, probada a fondo solo en Windows). Se puede probar desde el código
 > ([Probarlo](#probarlo)); el resto de este documento es el diseño y marca lo que falta.
 
@@ -65,6 +65,10 @@ directamente desde el proceso principal (ver [Cómo se cargan](#cómo-se-cargan)
 - «Salir» desde la bandeja o al cerrar la última ventana (ajustable) para el servidor.
 
 ## Plugins
+
+> **Plugins con permisos.** Además de los de scripts que describe esta sección, hay plugins **con panel propio y
+> permisos declarados**, que corren aislados: se hacen, empaquetan e instalan desde Ajustes ▸ Plugins. Guía completa en
+> [HACER-PLUGINS.md](HACER-PLUGINS.md).
 
 Un plugin es **una carpeta** con un `manifest.json` y sus scripts, en `<datos>/plugins/<nombre>/`. El puente de
 Atresplayer ya es casi uno: la misma carpeta se usa como extensión de navegador y como plugin de la app.
@@ -234,6 +238,14 @@ Se empaqueta para el sistema en el que se ejecuta (el servidor congelado tambié
 puerto de depuración de desarrollo (`TDT_DEBUG_PORT`), así que se comprueba desde fuera: que arranca, que su servidor es el
 congelado, que un segundo lanzamiento le cede el paso al primero y que al salir no queda ningún proceso. En Windows, sin
 comprimir, la carpeta ronda los 335 MB (Chromium es casi todo).
+
+### Plugins de desarrollo
+
+Además de los plugins aislados de arriba hay otro tipo, **sin aislamiento ni permisos**, para quien desarrolla (o para una
+IA que edite sus archivos): corren con los mismos poderes que la aplicación, en la página o en el proceso principal.
+Funcionan solo con el **modo desarrollador** encendido (Ajustes ▸ Desarrollo, con una pregunta nativa que ninguna página puede
+responder; o `TDT_DEV=1`), solo desde su carpeta propia (`<datos>/dev-plugins/`), cada uno activado a mano y con un aviso rojo
+permanente en la ventana. Cómo escribirlos, y por qué son así, en [PLUGINS.md](PLUGINS.md).
 
 ### Instaladores
 

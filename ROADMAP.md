@@ -16,8 +16,27 @@ bienvenidas como *issues*.
 ## Ventana y reproductor
 - [ ] **Ventana propia** en lugar de abrir el navegador: modo app de Chrome/Edge (sin dependencias) con un ajuste para
   elegir; cerrar la ventana podría parar el servidor y sustituir al botón «Salir». pywebview, más adelante y opcional.
-  Hay un **prototipo de aplicación con Chromium propio (Electron) y plugins**, con el puente de Atresplayer como primer
-  plugin, en [docs/DESKTOP.md](docs/DESKTOP.md). Lo que falta: empaquetarlo (con el servidor dentro) y las actualizaciones; es la base de código principal, el modo navegador se mantiene.
+  Hay una **aplicación con Chromium propio (Electron) y plugins**, con el puente de Atresplayer como primer plugin, que
+  los instaladores llevan desde la 1.3.0 ([docs/DESKTOP.md](docs/DESKTOP.md)). Lo que falta: actualizaciones y firma de
+  código; es la base de código principal, el modo navegador se mantiene.
+- [ ] **Plugins abiertos y acceso para IAs (un MCP):** hechos (sin publicar) los plugins de desarrollo, el bus de control, el
+  servidor MCP y los **plugins con permisos** (panel aislado, SDK, empaquetar e instalar `.tdtplugin`:
+  [docs/HACER-PLUGINS.md](docs/HACER-PLUGINS.md)). Hecho: instalar desde un enlace y desde un catálogo con el hash fijado. Hechas también las firmas de autor. Falta: que una IA escriba
+  plugins con permisos por el MCP, plugins de datos y de servicio, y las marcas de anuncios como evento. Diseño en
+  [docs/PLUGINS.md](docs/PLUGINS.md).
+- [ ] **Hacer la aplicación «hackeable»** (que cualquiera pueda cambiarla a su gusto, sin esfuerzo): una escalera de ajustes ▸ reglas sin código ▸
+  plugins con permisos ▸ plugins de desarrollo, con la IA como rampa de entrada. Hecho (sin publicar): **las reglas** («cuando pase esto,
+  haz aquello», [docs/REGLAS.md](docs/REGLAS.md)), por el botón *Reglas* y por MCP. Hecho también: el **modo seguro** (arrancar sin plugins), los **límites de memoria y procesador por plugin**, las **firmas de autor**, el **catálogo y la instalación por enlace**, el **inspector en vivo** de eventos y llamadas, los **temas de plugin** (solo colores, los elige el usuario), las **reglas y atajos que trae un plugin** (apagados hasta que el usuario los enciende), los **proveedores de canales y de guía** (`tdt.channels.provide`, `tdt.epg.provide`), los **ajustes generados desde el manifest** (`tdt.settings`) y una **lista única de órdenes y eventos**
+  (`static/commands.json`) a la que se ajustan reglas, plugins, bus y MCP, y un **bus de eventos** (`channel.changed`, `kind.changed`,
+  `volume.changed`, `programme.started`) para plugins y por MCP. Hecho también, primer hito de [docs/HACKEABLE.md](docs/HACKEABLE.md): los **ganchos** (acciones, filtros y registros con prioridad, en la página y en el servidor), el cargador de plugins con todo el poder y la **publicidad como plugin incluido** (eventos `ad.started` y `ad.ended`, filtro `ad.reaction`, registro `ad.actions`). Hecho también: **plugins con todo el poder que cualquiera instala** (`tdt.full`, sin el modo desarrollador, con la aprobación atada a la huella del código). Hechos también: las **capas sobre la imagen** (`tile.overlay`) y los **temas completos** (hoja de estilo, `docs/TEMAS.md`). Falta, en este orden: la parte de servidor y el alcance `main` de esos plugins; las demás ranuras de interfaz, las plantillas y los temas hijo y temas completos; el registro de reproductores; el evento `channel.status`; ajustes
+  los servicios con Workers y notificaciones del sistema (los servicios que duermen hasta su evento o su hora ya están hechos); puntos de enganche en la interfaz (botones, menú, superposición, temas); un inspector en vivo; catálogo e instalación por
+  enlace. Plan y estado en [docs/PLUGINS-ARQUITECTURA.md](docs/PLUGINS-ARQUITECTURA.md#14-hackeable-la-escalera).
+- [ ] **Fuentes de reproducción como plugins** (YouTube, Twitch, el reproductor de Atresplayer; hecho el mecanismo declarativo `tdt.sources` con el
+  permiso `embed:servidor`, comprobado con un directo de Twitch: arranca con un clic. YouTube y Atresplayer **no se mueven todavía**: harían falta adaptadores
+  de control del sonido y el modo navegador no tiene plugins; análisis en [docs/PLUGINS-ARQUITECTURA.md](docs/PLUGINS-ARQUITECTURA.md)): salen del núcleo y cada una pasa a ser un
+  plugin que declara el servidor al que se conecta y que el usuario aprueba, para que el núcleo no cargue código de terceros. Falta un
+  permiso para embeber un servidor y poder ser una fuente de canal; si Twitch acepta su reproductor en la caja de un plugin está por
+  comprobar. Diseño en [docs/PLUGINS.md](docs/PLUGINS.md). Un PR de Twitch en el núcleo queda abierto como referencia.
 - [ ] **Reproductor ampliable con plugins:** cada casilla como una cadena (audio, vídeo, capas) con módulos que declaran
   sus ajustes. El sonido y la reacción a las pausas de anuncios serían los primeros.
 - [ ] **Sustituir los anuncios por otro contenido** (otro stream, vídeo o imagen), reescribiendo la lista entre

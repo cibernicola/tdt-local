@@ -1,5 +1,7 @@
 # TDT local
 
+**Tune · Display · Tinker — local.**
+
 [![CI](../../actions/workflows/ci.yml/badge.svg)](../../actions/workflows/ci.yml)
 
 > [!WARNING]
@@ -7,6 +9,9 @@
 > varios me lo pedisteis. Está «vibecodeado» con IA, así que los bichos y los agujeros de seguridad son más
 > probables que improbables. Úsalo con cariño, no lo expongas a internet y lee la
 > [letra pequeña](#letra-pequeña-con-cariño). Las críticas, las *issues* y los *pull requests* son bienvenidos.
+
+**TDT** es, además de la televisión de toda la vida, el lema del proyecto: **T**une · **D**isplay · **T**inker. Se sintoniza, se muestra
+y se trastea (plugins, reglas, temas y un MCP para que lo maneje una IA), todo en tu equipo.
 
 Visor web **local** para ver la TDT española y escuchar la radio en el PC sin las apps de cada
 cadena. Usa las listas públicas de [TDTChannels](https://github.com/LaQuay/TDTChannels)
@@ -46,6 +51,8 @@ comprobado en condiciones simuladas o con pocos casos reales. **📋 Pendiente**
 | Guía de programación (EPG) | ✅ Hecho · cubre unos 175 canales de tele y 50 emisoras |
 | Directos de YouTube incrustados | ✅ Hecho |
 | Canales propios, con cabeceras `Origin` y `Referer` | ✅ Hecho |
+| **Reglas de automatización** («a las 21:00 pon La 1», «cuando empiece algo de fútbol, avísame»): botón *Reglas*, sin programar, y por MCP con confirmación ([docs/REGLAS.md](docs/REGLAS.md)) | 🧪 Probado poco · en la aplicación real en Windows: diálogo, MCP y una regla por canal que se cumple sola; las de hora y programa, con pruebas unitarias |
+| Cabeceras de petición editables en cualquier canal (también las de las listas públicas) y por MCP | 🧪 Probado poco · en la aplicación real en Windows; el comportamiento de las cabeceras con un origen de verdad lo comprueban las pruebas de Python |
 | U7D: lo emitido en los últimos 7 días por La 1, La 2, 24 Horas, Teledeporte y Clan (RTVE), del más reciente al más antiguo | 🧪 Probado poco · con la red real: la lista y la reproducción de un telediario; los programas con DRM se avisan y no se reproducen |
 | U7D de Atresmedia (Antena 3, laSexta, Neox, Nova, Mega y Atreseries), solo en la aplicación de escritorio y con el plugin `atresplayer-u7d` | 🧪 Probado poco · con la red real en Antena 3: la ventana lee la lista y la grabación se abre en su página; con el DNS de esta máquina (filtra anuncios) la página no reproduce, así que la reproducción no está comprobada |
 | Favoritos, último canal, volumen y filtros (en el navegador) | ✅ Hecho |
@@ -55,6 +62,16 @@ comprobado en condiciones simuladas o con pocos casos reales. **📋 Pendiente**
 | Asistente de IA local (órdenes y preguntas) | ✅ Hecho · necesita un servidor compatible con OpenAI |
 | Subtítulos en directo con Whisper | 🧪 Probado poco · alucina con música y voces solapadas |
 | Alertas por voz (palabras vigiladas en las cuatro casillas) | 🧪 Probado poco · misma limitación |
+| Acceso de IAs: una API con token para que una IA o un plugin vea qué estás viendo y, si lo eliges, ponga canales o cambie el volumen (apagado por defecto) | 🧪 Probado poco · comprobado con la aplicación real en Windows; ver [docs/PLUGINS.md](docs/PLUGINS.md) |
+| Servidor MCP (`tdt-local mcp` o `POST /mcp`): una IA lee qué ves, busca canales y, si lo permites, los pone y cambia el volumen; con el tercer nivel, escribe y depura plugins (con permisos, con todo el poder, temas y de desarrollo; cada cambio y cada activación los confirma el usuario con el código a la vista) | 🧪 Probado poco · en Windows con la aplicación real, con un cliente MCP independiente (el SDK oficial) y con **Claude Code**, por entrada y salida estándar y por HTTP (`scripts/plugin-lab/mcp-claude.mjs`: conecta, ve las 30 herramientas, lee, cambia el volumen y escribe y activa un tema); **no** con Claude Desktop ni con otros clientes; ver [docs/PLUGINS.md](docs/PLUGINS.md) |
+| Plugins con permisos: un panel propio sobre el reproductor, aislado, que declara qué pide (ver qué ves, poner canales, la guía, avisos, guardar datos, hablar con un servidor) y que tú apruebas al activarlo; se hacen, se empaquetan (`.tdtplugin`) y se instalan desde Ajustes ▸ Plugins; guía en [docs/HACER-PLUGINS.md](docs/HACER-PLUGINS.md) | 🧪 Probado poco · solo en la aplicación de escritorio, comprobado en Windows con plugins de ejemplo y uno hostil que intenta escapar de la caja; sin comprobar en macOS ni Linux. Se instalan también desde un enlace o un catálogo (con el SHA-256 fijado), con **firma de autor** (se anota la clave la primera vez y se avisa si cambia) y con **límites de memoria y procesador** por plugin |
+| Plugins de desarrollo (sin aislamiento, para quien desarrolla o una IA que edite archivos), con el modo desarrollador | 🧪 Probado poco · solo en la aplicación de escritorio, comprobado en Windows; ver [docs/PLUGINS.md](docs/PLUGINS.md) |
+| **Plugins con todo el poder**: corren dentro de la página, sin aislar, con los ganchos de la aplicación; se instalan como los demás, **sin el modo desarrollador**; al activarlos se te enseña su código y la aprobación va atada a una huella de todos sus archivos (una letra cambiada y se vuelve a preguntar) ([docs/HACKEABLE.md](docs/HACKEABLE.md)) | 🧪 Probado poco · solo en la aplicación de escritorio, comprobado en Windows (instalar, activar, cambiar el código y que se detenga, modo seguro); los avisos nativos los contesta la prueba, no se han visto en la aplicación empaquetada |
+| **Ganchos**: la aplicación deja mirar, cambiar o reemplazar lo que hace (acciones, filtros con prioridad y registros) en la página y en el servidor | 🧪 Probado poco · la página, en la aplicación real; la parte de Python está probada con pruebas, pero ningún plugin la carga todavía |
+| **Temas completos**: una hoja de estilo (con sus imágenes y fuentes dentro) que cambia cualquier regla, sin código; uno a la vez ([docs/TEMAS.md](docs/TEMAS.md)) | 🧪 Probado poco · solo en la aplicación de escritorio, comprobado en Windows |
+| **Capas sobre la imagen** de cada casilla, que dejan pasar los clics | 🧪 Probado poco · en la aplicación real en Windows, con una capa de prueba |
+| Modo seguro (arranca sin ningún plugin tras dos cierres malos seguidos, con `--safe` o desde Ajustes), inspector en vivo de eventos, llamadas y reglas | 🧪 Probado poco · en la aplicación real en Windows, con arranques y cierres de verdad |
+| Plugins con ajustes que genera la aplicación, servicios que duermen hasta su evento o su hora, fuentes de reproducción declarativas (por ejemplo Twitch), proveedores de canales y de guía, y reglas y atajos que trae un plugin | 🧪 Probado poco · en la aplicación real en Windows; Twitch, con un directo real |
 | Instaladores para Windows, macOS (13 o superior) y Linux | 🧪 Probado poco · sin firmar; pesan unos 100 MB; macOS y Linux sin probar en máquinas limpias |
 | Marcas de anuncios SCTE-35 en las listas HLS: detectar, decodificar, guardar y exportar (JSON y CSV) | ✅ Hecho · comprobado con streams reales |
 | Aviso en pantalla cuando aparece una marca nueva | ✅ Hecho |
@@ -76,7 +93,8 @@ comprobado en condiciones simuladas o con pocos casos reales. **📋 Pendiente**
 | Sacar el enlace de un directo desde tu navegador y añadirlo como canal propio (`tools/capturar-directo.js`) | 🧪 Probado poco · con una página de ejemplo, no con la web real de ninguna cadena |
 | Ventana propia en lugar de abrir el navegador | 🧪 Probado poco · es la aplicación de escritorio de arriba |
 | Controles propios del reproductor: calidad, pistas de audio, estadísticas, «volver al directo», retroceso | 📋 Pendiente |
-| Reproductor ampliable con plugins (el sonido y la reacción a anuncios serían los primeros) | 📋 Pendiente |
+| Reacción a los anuncios ampliable con plugins (añadir pasos propios, quitarlos o reemplazar los de la aplicación; eventos `ad.started` y `ad.ended`) | 🧪 Probado poco · con un directo simulado y en la aplicación real; la reacción de la aplicación es ahora un plugin incluido con el mismo comportamiento |
+| Reproductor propio por plugin (registro de reproductores) | 📋 Pendiente |
 | Sustituir los anuncios por otro contenido | 📋 Pendiente |
 | Modo compatible con ffmpeg para formatos que el navegador no reproduce | 📋 Pendiente |
 | Instaladores firmados, y en winget, Homebrew y APT | 📋 Pendiente |
@@ -89,7 +107,7 @@ baja?» y aquí estamos: el repositorio es público por vuestra culpa (y me aleg
 hoja de soporte y la versión 1.0.0 se llama así porque el contador tenía que empezar en alguna parte.
 
 **Cómo está hecho.** «Vibecodeado»: lo he ido construyendo conversando con una IA (Claude), yo dirigiendo, probando y
-diciendo «eso no» de vez en cuando. Hay más de 400 pruebas automáticas, lo que demuestra que pasan, no que el código
+diciendo «eso no» de vez en cuando. Hay más de mil pruebas automáticas (unas 600 de Python y unas 400 del navegador) y varios bancos que mueven la aplicación real, lo que demuestra que pasan, no que el código
 sea perfecto. Funciona en mi máquina™ y también en la CI de GitHub, que ya es algo más que mi máquina.
 
 **Seguridad: sed prudentes.**
@@ -127,7 +145,7 @@ Hace falta Python 3.9 o superior.
 
 **Aplicación de escritorio con plugins:** además hace falta Node 20 o superior. `cd desktop`, `npm install` y `npm start` (para empaquetarla, `npm run pack` tras `python packaging/build.py --server-only`). [docs/DESKTOP.md](docs/DESKTOP.md) explica cómo es y qué falta.
 
-- **Windows:** doble clic en `iniciar.bat`.
+- **Windows:** doble clic en `iniciar.bat` (se abre en el navegador) o en `iniciar-escritorio.bat` (la aplicación de escritorio, con plugins; instala sus dependencias la primera vez).
 - **Linux / macOS:** `./iniciar.sh`
 - **A mano:** `python -m tdtlocal --open`
 - **Con pip:** `pip install .` y luego `tdt-local --open` (o `tdt-local-app`, la versión de escritorio)
@@ -181,8 +199,16 @@ conexión para descargar las listas; después se usa la última copia guardada e
   falla. También queda en `<datos de la app>/logs/tdt-local.log` (se rota a 1 MB). Se ocultan claves, tokens y
   cabeceras de credenciales; aun así, léelo antes de enviarlo: puede incluir direcciones de canales y de páginas.
 - **Canales propios:** «Añadir canal» guarda un enlace que pegues tú (m3u8, mp3/aac o YouTube) en
-  `data/custom.json`, con cabeceras `Origin`/`Referer` opcionales que el proxy envía con la lista y
-  con cada segmento. No se salta DRM ni geobloqueos: solo cabeceras. Para no copiar el enlace a mano hay un
+  `data/custom.json`, con cabeceras opcionales que el proxy envía con la lista y con cada segmento. No se salta DRM ni
+  geobloqueos: solo cabeceras.
+- **Cabeceras de un canal, editables:** el botón **Cabeceras** de cualquier canal (tuyo o de las listas públicas) abre un
+  diálogo con las cabeceras de petición que se mandan a su servidor: `Referer`, `Origin`, `User-Agent` o cualquier otra
+  (hasta 8). Ninguna por defecto: un canal no lleva cabeceras hasta que las pones tú. `Origin`, `Referer` y `User-Agent` van a
+  todos los servidores del canal; **cualquier otra (una cookie, un token) va solo a los servidores de sus enlaces y se quita si el
+  origen redirige a otro**, y su valor no vuelve a la pantalla (se ve que está puesta y se puede sustituir o quitar). No se pueden
+  poner las del transporte (`Host`, `Content-Length`, `Range`…). Las de un canal de las listas públicas se guardan aparte
+  (`data/headers.json`) y sobreviven a una actualización de la lista. Por MCP: `tdt_headers_get` (nivel «leer») y
+  `tdt_headers_set` (nivel «plugins»; cada cambio lo confirma el usuario en una ventana del sistema, solo en la aplicación de escritorio). Para no copiar el enlace a mano hay un
   [fragmento para tu navegador](#sacar-el-enlace-de-un-directo-desde-tu-navegador).
 - **Atresmedia con un clic:** «Añadir canal» tiene un botón que añade Antena 3, La Sexta, Neox, Nova, Mega y Atreseries
   con el reproductor oficial incrustable de Atresplayer (`https://www.atresplayer.com/embed/live/<canal>/`), igual que los

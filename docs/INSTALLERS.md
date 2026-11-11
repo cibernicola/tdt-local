@@ -109,6 +109,11 @@ con una excepción que permite distribuir los programas generados con cualquier 
 La CI construye los cuatro instaladores en cada ejecución de `release.yml` y, desde la 1.3.0 (la primera con Electrón),
 pasa `packaging/smoke.py` a la app empaquetada en Windows, macOS y Linux y al `.deb` instalado. Eso comprueba que
 arranca, sirve la página, cede el paso a un segundo lanzamiento y se cierra; no es una instalación en un equipo limpio.
+**En la 1.5.0** se comprobó además, a mano en Windows, la app empaquetada con `scripts/plugin-lab/packaged.mjs` (22 comprobaciones): el paquete lleva
+los archivos de la interfaz y de los plugins incluidos, la página corre y publica su estado, las órdenes y los eventos llegan, y el servidor MCP
+por HTTP con el token ofrece las 30 herramientas y su escritor de plugins funciona a través del preload del paquete. No se pudo construir el
+`setup.exe` en esa máquina (falta Inno Setup 6: lo construye la CI), y el **aviso nativo de activar un plugin** no lo ha visto ni pulsado nadie en
+la app empaquetada (en el código fuente lo contestan las pruebas con una variable que el paquete no tiene).
 Lo que sigue describe lo que se comprobó, a mano, de los instaladores de las versiones anteriores (los de la aplicación
 que abría el navegador). Antes se
 ejecutan las pruebas de Python en Linux, Windows y macOS. El paquete portable de Windows generado por la CI se

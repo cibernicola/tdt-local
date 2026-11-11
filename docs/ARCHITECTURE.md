@@ -33,6 +33,19 @@ navegador ──HTTP──▶ server.Handler ──▶ App ─┬─ Store      
 | `store.py` | `Store`: canales, guías, estado de salud y canales propios, con un único `RLock` |
 | `parser.py` | Markdown de TDTChannels ➜ canales (función pura) |
 | `custom.py` | validación de los canales que pega el usuario |
+| `headers.py` | las cabeceras de un canal: nombres y valores válidos, cuáles no se pueden poner, adónde pueden ir y qué ve la página (funciones puras) |
+| `headers_routes.py` | `GET`/`POST /api/headers`: ver y cambiar las cabeceras de un canal (cambiar, solo desde este equipo) |
+| `control.py` | el bus de control: el estado que publica la página, las órdenes de un cliente (IA, plugin) con su nivel (`read` < `control` < `dev`), el token y el registro de lo hecho; cada orden tiene su comprobador en la tabla `CLEANERS` |
+| `control_routes.py` | rutas `/api/control/*` (la página: estado, eventos, resultado; un cliente: lectura y órdenes con el token) y `POST /mcp` |
+| `static/commands.json` | **la lista única** de órdenes y eventos (nombre, argumentos, permiso, ejemplo): reglas, plugins, bus de control y MCP la comparten, y `tests/test_commands.py` y `tests/js/events.test.mjs` comprueban que cada uno entiende exactamente esto |
+| `control_data.py` | lo que el bus lee sin molestar a la página: búsqueda de canales, guía, marcas de anuncios y la especificación de la API de plugins |
+| `hooks.py` | los **ganchos** del servidor (acciones, filtros con prioridad y registros: lo que la aplicación deja mirar, cambiar o reemplazar; ver [HACKEABLE.md](HACKEABLE.md)); la misma idea y las mismas reglas que `static/js/lib/hooks.js` |
+| `trusted.py` | el cargador de los plugins con todo el poder del servidor: les da su `tdt`, apunta todo lo que añaden para poder quitarlo y no deja que sus fallos lleguen a la aplicación (cinco y se apaga) |
+| `rules.py` | las reglas de automatización («cuando pase esto, haz aquello»): qué es una regla válida, cómo se explica y su archivo `rules.json` (sin código: solo órdenes que ya existen) |
+| `rules_routes.py` | `GET`/`POST /api/rules`: leer las reglas y sustituirlas (sustituir, solo desde este equipo) |
+| `mcp.py` | el servidor MCP: el protocolo (JSON-RPC por entrada y salida estándar o por `POST /mcp`) y los dos accesos a la aplicación (`LocalBackend`, `RemoteBackend`) |
+| `mcp_tools.py` | el catálogo de herramientas MCP: nombre, argumentos (un JSON Schema pequeño que se comprueba antes de enviar nada) y qué orden del bus lanza cada una |
+| `mcp_guide.py` | los textos que el MCP ofrece a una IA para escribir plugins (guías y plugin de ejemplo) |
 | `hls.py` | reescritura de listas m3u8 para que todo vuelva al proxy (función pura) |
 | `feeds.py` | descarga de las listas con ETag y reintentos |
 | `epg.py` | XMLTV ➜ programas; *payloads* de la guía |
@@ -66,7 +79,9 @@ Reglas de diseño:
    permitiendo su host. Si no, se reenvía por trozos.
 4. Si la sesión `s` activó la transcripción, un `Tap` copia el segmento (o el audio continuo) a la
    cola del `Transcriber` sin retrasar la respuesta.
-5. Las cabeceras de un canal propio (`c`) se añaden a la petición al origen y nunca llegan al navegador.
+5. Las cabeceras de un canal (`c`: propio, o con cabeceras puestas por el usuario) se añaden a la petición al origen. Origin, Referer y
+   User-Agent van a todos sus servidores; las demás (que pueden ser credenciales) solo a los de sus enlaces, y una redirección a otro
+   servidor las quita. La página nunca recibe el valor de una credencial.
 6. Si la vigilancia de marcas está activa, `ScteWatcher.observe` analiza la lista antes de reescribirla; nunca
    lanza una excepción, para no estorbar a la reproducción.
 
@@ -106,9 +121,15 @@ clásico que define `Hls` antes.
   conecta al contexto cuando este ya suena (un contexto suspendido lo dejaría mudo y no se puede deshacer).
 - `sound.js` — el diálogo **Sonido**: ajustes globales y propios de cada canal (`localStorage`), preajustes y medida en vivo.
   Los ajustes y la matemática del igualador (pura y probada) están en `lib/audio.js`.
-- `adbreak.js` — la reacción a una pausa de anuncios: guarda la pausa en curso y sus temporizadores. Qué hacer con cada
-  marca (cuándo llega, si es tardía, qué audio corresponde, qué canal) lo decide `lib/adbreak.js`, que es puro y está
-  probado. El audio se cambia en la casilla (`Tile.setDuck`), sin tocar el volumen guardado.
+- `adbreak.js` — el **motor** de la pausa de anuncios: averigua cuándo empieza y acaba, guarda la pausa en curso y sus temporizadores, y avisa
+  con los eventos `ad.started` y `ad.ended`. **Qué se hace durante la pausa no está aquí**: el filtro `ad.reaction` dice los pasos (por defecto, lo elegido
+  en Ajustes) y cada paso es una acción del registro `ad.actions`. Esas acciones y los pasos por defecto son del plugin incluido `plugins/ads/page.js`;
+  cualquier otro plugin puede añadir pasos, cambiarlos o reemplazar una acción. Cuándo llega una marca, si es tardía, qué audio corresponde y qué canal
+  lo decide `lib/adbreak.js`, que es puro y está probado. El audio se cambia en la casilla (`Tile.setDuck`), sin tocar el volumen guardado.
+- `hooks.js`, `lib/hooks.js`, `lib/trusted.js`, `core-plugins.js`, `plugins/<id>/` — los **ganchos** de la página (acciones = el bus de eventos, filtros con
+  prioridad, registros), el cargador de los plugins con todo el poder (les da su `tdt`, apunta lo que añaden, aísla sus fallos: cinco y se apaga) y los plugins
+  que vienen con la aplicación, cargados por ese mismo cargador. Visión y plan: [HACKEABLE.md](HACKEABLE.md); dónde decide hoy el núcleo:
+  [PUNTOS-DE-ENGANCHE.md](PUNTOS-DE-ENGANCHE.md).
 - `dom.js`, `store.js`, `api.js` — utilidades de DOM, de almacenamiento y de red.
 
 ## Ajustes
