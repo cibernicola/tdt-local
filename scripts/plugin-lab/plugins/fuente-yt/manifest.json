@@ -1,0 +1,1 @@
+{ "name": "Fuente YT", "version": "1", "tdt": { "api": 1, "permissions": ["embed:www.youtube-nocookie.com"], "sources": [ { "name": "YT de prueba", "match": "https://yt.example/{1}", "embed": "https://www.youtube-nocookie.com/embed/{1}", "control": "youtube" } ] } }

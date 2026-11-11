@@ -1,0 +1,1 @@
+{ "name": "Atajos", "version": "1", "tdt": { "api": 1, "rules": [ { "id": "volumen-bajo", "name": "Volumen bajo", "when": { "type": "key", "key": "alt+9" }, "do": [ { "action": "volume", "value": 0.27 }, { "action": "toast", "text": "Volumen bajo" } ] } ] } }

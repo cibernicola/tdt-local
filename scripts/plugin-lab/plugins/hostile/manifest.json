@@ -1,0 +1,1 @@
+{"name": "Hostil", "version": "1", "tdt": {"api": 1, "label": "Hostil", "panel": {"width": 240, "height": 120}, "permissions": ["player.read", "storage"], "settings": {"ciudad": {"type": "choice", "label": "Ciudad", "options": ["Madrid", "Sevilla"], "default": "Madrid"}, "segundos": {"type": "number", "label": "Segundos", "min": 5, "max": 600, "default": 20}}}}

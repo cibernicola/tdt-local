@@ -1,0 +1,1 @@
+{ "name": "Servicio", "version": "1", "tdt": { "api": 1, "activation": ["onEvent:channel.changed"], "permissions": ["player.read", "storage"] } }

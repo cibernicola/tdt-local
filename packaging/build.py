@@ -40,7 +40,10 @@ SLUG = "tdt-local"
 SERVER_SLUG = "tdt-local-server"  # the server alone, for the Electron app (see docs/DESKTOP.md)
 ELECTRON_OUT = DIST / "electron"
 
-DESCRIPTION = "Visor local de la TDT española y la radio, con guía, multivisión, subtítulos y asistente de IA local."
+DESCRIPTION = (
+    "Tune · Display · Tinker — local. Visor local de la TDT española y la radio, con guía, multivisión, subtítulos "
+    "y asistente de IA local."
+)
 HOMEPAGE = os.environ.get("TDT_HOMEPAGE", "https://github.com/cibernicola/tdt-local")
 
 

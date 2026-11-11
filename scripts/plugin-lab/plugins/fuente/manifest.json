@@ -1,0 +1,1 @@
+{ "name": "Fuente", "version": "1", "tdt": { "api": 1, "permissions": ["embed:player.twitch.tv"], "sources": [ { "name": "Twitch", "match": "https://www.twitch.tv/{1}", "embed": "https://player.twitch.tv/?channel={1}&parent={parent}" } ] } }

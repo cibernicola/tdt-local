@@ -77,11 +77,13 @@ jobs:
   publish:
     name: Publish release
     needs: installers
-    if: startsWith(github.ref, 'refs/tags/v')
+    # Also when one platform failed: what was built is published, and the notes say what is missing (nothing is published if nothing was built)
+    if: ${{ always() && !cancelled() && startsWith(github.ref, 'refs/tags/v') }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           path: installers
@@ -91,7 +93,30 @@ jobs:
           cd installers
           cat SHA256SUMS-*.txt | sort -k2 -u > SHA256SUMS.txt
           rm SHA256SUMS-*.txt
+      # The notes are the section of the CHANGELOG of this version, plus what could not be built (if anything)
+      - name: Write the notes
+        shell: python
+        run: |
+          import os, pathlib, re
+          version = os.environ["GITHUB_REF_NAME"].lstrip("v")
+          changelog = pathlib.Path("CHANGELOG.md").read_text(encoding="utf-8")
+          found = re.search(r"^## \[" + re.escape(version) + r"\][^\n]*\n(.*?)(?=^## \[)", changelog, re.S | re.M)
+          notes = (found.group(1).strip() if found else "Ver el CHANGELOG.") + "\n"
+          names = [p.name for p in pathlib.Path("installers").iterdir()]
+          wanted = {
+              "Windows": "windows",
+              "macOS (Intel)": "macos-x64",
+              "macOS (Apple Silicon)": "macos-arm64",
+              "Linux": "linux",
+          }
+          missing = [label for label, key in wanted.items() if not any(key in name for name in names)]
+          if missing:
+              notes += (
+                  "\n---\n**No se ha podido construir el instalador de: " + ", ".join(missing) + ".** "
+                  "Esta versión se publica sin él; si es tu sistema, abre una *issue* con lo que veas.\n"
+              )
+          pathlib.Path("notes.md").write_text(notes, encoding="utf-8")
       - name: Create the release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" installers/* --repo "$GITHUB_REPOSITORY" --title "TDT local ${GITHUB_REF_NAME#v}" --generate-notes
+        run: gh release create "$GITHUB_REF_NAME" installers/* --repo "$GITHUB_REPOSITORY" --title "TDT local ${GITHUB_REF_NAME#v}" --notes-file notes.md

@@ -1,0 +1,1 @@
+{ "name": "Tema", "version": "1", "tdt": { "api": 1, "themes": [ { "id": "rojo", "name": "Rojo", "scheme": "dark", "vars": { "--accent": "#ff0033", "--font": "Comic Sans MS", "--ink": "url(https://evil.example/x.png)" } } ] } }

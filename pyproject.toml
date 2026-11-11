@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tdt-local"
-description = "Visor web local para las listas de TDTChannels: televisión y radio de España, guía, multivisión, subtítulos y asistente con IA local"
+description = "TDT local (Tune · Display · Tinker): visor web local para las listas de TDTChannels: televisión y radio de España, guía, multivisión, subtítulos y asistente con IA local"
 readme = "README.md"
 license = "Apache-2.0"
 license-files = ["LICENSE", "NOTICE"]

@@ -1,0 +1,1 @@
+{ "name": "Ticker pantalla", "version": "1", "tdt": { "api": 1, "label": "TickerP", "panel": { "placement": "screen" } } }

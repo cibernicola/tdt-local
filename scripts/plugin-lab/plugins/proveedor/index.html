@@ -1,0 +1,12 @@
+<!doctype html><meta charset="utf-8"><p>proveedor</p><script src="/@tdt/sdk.js"></script><script>
+window.__res = null; window.__bad = null;
+tdt.ready.then(async () => {
+  window.__bad = await tdt.channels.provide([{ name: 'Con cabeceras', sources: ['https://prov.example/x.m3u8'], headers: { Cookie: 'a=b' } }]).then(() => 'aceptado', (e) => e.code);
+  window.__res = await tdt.channels.provide([
+    { name: 'Proveedor Uno', sources: ['https://prov.example/uno.m3u8'], epg: 'proveedor:uno' },
+    { name: 'Proveedor Dos', kind: 'radio', sources: ['https://prov.example/dos.mp3'] },
+  ]);
+  const now = Math.floor(Date.now() / 1000);
+  window.__epg = await tdt.epg.provide({ uno: [[now - 60, now + 1800, 'Programa de prueba', 'Lo da el plugin', 'Pruebas'], [now + 1800, now + 3600, 'Después']] });
+});
+</script>

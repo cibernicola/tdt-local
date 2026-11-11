@@ -1,0 +1,4 @@
+<!doctype html><meta charset="utf-8"><p>servicio</p><script src="/@tdt/sdk.js"></script><script>
+window.__woke = [];
+tdt.on('channel.changed', (d) => { window.__woke.push(d.name); tdt.storage.set('count', window.__woke.length).catch(() => {}); });
+</script>

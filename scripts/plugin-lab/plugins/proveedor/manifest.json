@@ -1,0 +1,1 @@
+{ "name": "Proveedor", "version": "1", "tdt": { "api": 1, "permissions": ["provide:channels", "provide:epg"] } }
