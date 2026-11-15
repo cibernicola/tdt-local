@@ -50,6 +50,25 @@ Un tema depende de nombres que la aplicación no cambia sin decirlo en el [CHANG
 Los `id` de `index.html` también son estables (`#list`, `#panel`, `#tiles`, `#btnMulti`…). El HTML que la aplicación construye con código (las filas de canal, la casilla) mantiene esas clases; **cambiar su
 estructura interior** (qué elemento va dentro de cuál) **no está garantizado todavía**: eso llegará con las plantillas.
 
+## Un ejemplo completo: Modern
+
+[`ejemplos/tema-modern/`](ejemplos/tema-modern/) es un tema oscuro y redondeado que cambia casi toda la interfaz: botones con icono y aviso al
+pasar el ratón, la barra bajo la imagen en una fila, Ajustes con las secciones en columna, y un `page.js` que pone el logo del canal junto a su
+número. Su [LEEME](ejemplos/tema-modern/LEEME.md) explica cómo instalarlo. Lo que se aprendió al hacerlo, por si haces el tuyo:
+
+- **Si das `display` a un elemento** (por ejemplo `.btn { display: inline-flex }`), tapas el atributo `hidden` con el que la aplicación esconde
+  botones que no tocan (Quitar canal en un canal que no es tuyo, el Asistente sin IA…). Añade `[hidden] { display: none !important; }`.
+- **Si la barra bajo la imagen crece**, añade `.stage { min-height: 0; }`: sin eso, la fila del reproductor no se encoge por debajo de 16:9 y la
+  página se desplaza en ventanas bajas.
+- **Para reordenar botones**, `order`: los de `.controls` y `.foot-actions` están en filas flex. Es solo visual: Tab sigue el orden de la página.
+  Para que Tab siga el mismo orden, mueve los botones con `page.js` (la aplicación los busca por su `id`, no por su sitio) y devuélvelos a su
+  sitio al apagar el plugin; Modern lo hace. Los plugins que se abren sobre la imagen añaden su botón al final de `.controls` (con
+  `data-plugin`): si tu tema quita el texto de los botones, deja el de esos, que no tienen icono.
+- **Para botones solo con icono**, deja el texto en la página con `font-size: 0` (los lectores de pantalla lo siguen leyendo) y pon el aviso en
+  `::after` con `content: "Guía" / ""`: el `/ ""` evita que el aviso se lea dos veces.
+- **Lo que una hoja no puede hacer** (copiar el logo de un canal a otro sitio), lo hace `page.js`; a cambio, el tema se aprueba como plugin con
+  código.
+
 ## Qué falta
 
 - **Plantillas** (reemplazar la casilla, la fila de un canal o la cabecera por otra estructura): hoy un tema cambia el aspecto, no la estructura.
