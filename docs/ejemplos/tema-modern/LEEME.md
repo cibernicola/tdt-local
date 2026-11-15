@@ -4,6 +4,17 @@ Un tema oscuro, limpio y redondeado para TDT local. Es un plugin con todo el pod
 [HACKEABLE.md](../../HACKEABLE.md)): trae una hoja de estilo (`tema.css`) y un poco de código (`page.js`). Solo funciona en la aplicación de
 escritorio.
 
+![Modern: la vista principal con Teledeporte](../../img/tema-modern/principal.webp)
+
+| | |
+|---|---|
+| ![Multivisión con cuatro canales](../../img/tema-modern/multivision.webp) | ![La guía de programación abierta sobre la imagen](../../img/tema-modern/guia.webp) |
+| ![Una emisora de radio](../../img/tema-modern/radio.webp) | ![Ajustes, con las secciones en una columna](../../img/tema-modern/ajustes.webp) |
+
+![La barra bajo la imagen, con el aviso de un botón](../../img/tema-modern/barra-aviso.webp)
+
+<img src="../../img/tema-modern/atajos.webp" alt="Los atajos de teclado abiertos desde el pie del panel" width="370">
+
 ## Qué cambia
 
 - **Siempre oscuro**, aunque el sistema esté en modo claro: la imagen es lo más brillante de la pantalla.

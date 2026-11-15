@@ -26,6 +26,15 @@ hls.js  https://github.com/video-dev/hls.js
   Copyright (c) 2013-2015 Brightcove, also Apache License 2.0.
 
 ------------------------------------------------------------------------------
+Used by the example plugins in docs/ejemplos/ (not in the installers)
+------------------------------------------------------------------------------
+
+Geist  https://github.com/vercel/geist-font
+  Copyright (c) 2023 Vercel, in collaboration with basement.studio
+  Licence: SIL Open Font License 1.1. Bundled, unmodified, as the variable font of the
+  Modern theme in docs/ejemplos/tema-modern/ (licence text in Geist-LICENSE.txt).
+
+------------------------------------------------------------------------------
 Optional programs TDT local can talk to (not included)
 ------------------------------------------------------------------------------
 
