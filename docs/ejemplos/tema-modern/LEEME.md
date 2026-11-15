@@ -34,18 +34,22 @@ Las carpetas de plugins, por si quieres llegar sin la aplicación: `%LOCALAPPDAT
 
 ## Qué hace page.js
 
-Pone el logo del canal que se está viendo junto a su número, bajo la imagen. Lee el canal actual del estado de la aplicación
-(`/js/state.js`) y construye el logo como la lista (`/js/dom.js`), así que sale aunque la lista esté oculta o una búsqueda deje fuera el
-canal. No hace peticiones salvo la del propio logo, que pasa por el servidor local como en la lista. Al apagar el plugin, el logo se quita.
+- **Pone el logo del canal que se está viendo junto a su número**, bajo la imagen. Lee el canal actual del estado de la aplicación
+  (`/js/state.js`) y construye el logo como la lista (`/js/dom.js`), así que sale aunque la lista esté oculta o una búsqueda deje fuera el
+  canal. No hace peticiones salvo la del propio logo, que pasa por el servidor local como en la lista.
+- **Mueve los botones al orden del tema**, en la propia página, para que la tecla Tab los recorra en el mismo orden en que se ven. Los botones
+  que añaden los plugins que se abren sobre la imagen (como Teletexto) van detrás del grupo de vista, con su nombre, y Ocultar canales sigue
+  el último.
+
+Al apagar el plugin, el logo se quita y los botones vuelven a su orden.
 
 ## Límites
 
-- **El orden de los botones es solo visual.** La tecla Tab los recorre en el orden de la aplicación.
 - **Los nombres de los botones están copiados en la hoja** para los avisos al pasar el ratón: si la aplicación cambia el nombre de un botón,
   hay que cambiarlo aquí.
 - **`page.js` usa dos módulos internos de la aplicación** (`cur` de `state.js` y `fillLogo` de `dom.js`), que no forman parte del contrato de
   los temas: si cambian, el logo deja de salir. La prueba `tests/js/tema-modern-plugin.test.mjs` avisa si desaparecen, y también si la página
-  pierde un `id` que la hoja coloca o una variable que la hoja lee.
+  pierde un `id` que la hoja coloca o `page.js` mueve, o una variable que la hoja lee.
 - **En Ajustes, las flechas que cambian de sección son ← y →** (las de la aplicación), aunque las secciones estén en columna.
 
 ## Créditos

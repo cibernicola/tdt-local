@@ -61,6 +61,9 @@ número. Su [LEEME](ejemplos/tema-modern/LEEME.md) explica cómo instalarlo. Lo 
 - **Si la barra bajo la imagen crece**, añade `.stage { min-height: 0; }`: sin eso, la fila del reproductor no se encoge por debajo de 16:9 y la
   página se desplaza en ventanas bajas.
 - **Para reordenar botones**, `order`: los de `.controls` y `.foot-actions` están en filas flex. Es solo visual: Tab sigue el orden de la página.
+  Para que Tab siga el mismo orden, mueve los botones con `page.js` (la aplicación los busca por su `id`, no por su sitio) y devuélvelos a su
+  sitio al apagar el plugin; Modern lo hace. Los plugins que se abren sobre la imagen añaden su botón al final de `.controls` (con
+  `data-plugin`): si tu tema quita el texto de los botones, deja el de esos, que no tienen icono.
 - **Para botones solo con icono**, deja el texto en la página con `font-size: 0` (los lectores de pantalla lo siguen leyendo) y pon el aviso en
   `::after` con `content: "Guía" / ""`: el `/ ""` evita que el aviso se lea dos veces.
 - **Lo que una hoja no puede hacer** (copiar el logo de un canal a otro sitio), lo hace `page.js`; a cambio, el tema se aprueba como plugin con

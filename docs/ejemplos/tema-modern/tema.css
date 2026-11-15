@@ -271,15 +271,21 @@ input[type="checkbox"] { accent-color: var(--accent); }
 .multi-ctl .btn { min-height: 34px; }
 .multi-ctl select { min-height: 34px; padding-top: 5px; padding-bottom: 5px; padding-left: 10px; border-radius: var(--n-r-md); }
 
-/* order of the buttons (visual only: Tab still follows the app's order), in groups with a small gap between them:
-   this channel | tools | sound | view | the channel list. The source picker and the multi-view controls stay first. */
+/* order of the buttons, in groups with a small gap between them: this channel | tools | sound | view | the buttons plugins add |
+   the channel list. page.js moves them in the page to this same order, so the Tab key follows it; `order` draws it even before that.
+   The source picker and the multi-view controls stay first. */
 #btnFav { order: 10; } #btnGuide { order: 11; } #btnHdr { order: 12; } #btnDel { order: 13; }
 #btnAsk { order: 20; } #btnRules { order: 21; } #btnAlert { order: 22; } #btnScte { order: 23; }
 #btnSound { order: 30; } #btnSub { order: 31; }
 #btnMulti { order: 40; } #btnPip { order: 41; } #btnFull { order: 42; }
+.controls > [data-plugin] { order: 45; }
 #btnPanel { order: 50; }
 #btnAsk, #btnSound, #btnMulti, #btnPanel { margin-left: 12px; }
 #btnAsk[hidden] ~ #btnRules { margin-left: 12px; } /* the AI is off: Reglas opens the tools group */
+#btnFull + [data-plugin] { margin-left: 12px; } /* the first button a plugin added */
+/* a plugin's button has no icon here: it keeps its name as text */
+.controls > .btn[data-plugin] { width: auto; padding: 0 12px; gap: 7px; font-size: 13px; }
+.controls > .btn[data-plugin]::before, .controls > .btn[data-plugin]::after { content: none; }
 
 /* icon-only buttons: the label stays in the page (screen readers still read it) and shows as a tooltip */
 .controls > .btn, .foot-actions > .btn, #btnQuit {

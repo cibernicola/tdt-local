@@ -35,10 +35,12 @@ test('its font and the app icon are put inside the style sheet, within the limit
   assert.ok(assets.reduce((a, b) => a + b, 0) <= MAX_ASSETS, 'all of them together');
 });
 
-test('every id the style sheet places exists in the page', () => {
+test('every id the style sheet places and page.js moves exists in the page', () => {
   const ids = new Set([...INDEX.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1]));
-  const used = new Set([...withoutComments(CSS).matchAll(/#([A-Za-z][\w-]*)/g)].map((m) => m[1]).filter((id) => !/^[0-9a-f]{3,8}$/i.test(id)));
-  const missing = [...used].filter((id) => !ids.has(id));
+  const inCss = [...withoutComments(CSS).matchAll(/#([A-Za-z][\w-]*)/g)].map((m) => m[1]).filter((id) => !/^[0-9a-f]{3,8}$/i.test(id));
+  const inPage = [...PAGE.matchAll(/'((?:btn|now)[A-Z]\w*)'/g)].map((m) => m[1]);
+  assert.ok(inPage.length >= 17, 'page.js names the buttons it moves');
+  const missing = [...new Set([...inCss, ...inPage])].filter((id) => !ids.has(id));
   assert.deepEqual(missing, [], 'an id the app renamed or removed: its icon, tooltip or place in the order is lost');
 });
 
