@@ -5,6 +5,12 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); e
 
 ## [Sin publicar]
 
+### Funciones
+- **Tema de ejemplo Modern** (`docs/ejemplos/tema-modern/`): oscuro y redondeado, con botones de icono y aviso al pasar el ratón, la barra
+  bajo la imagen en una fila con el logo del canal (un `page.js`), los botones agrupados, el pie del panel en una fila y Ajustes con las
+  secciones en columna. Solo en la aplicación de escritorio. Una prueba (`tests/js/tema-modern-plugin.test.mjs`) avisa si la aplicación deja
+  de tener algo que el tema usa, y [docs/TEMAS.md](docs/TEMAS.md) recoge lo aprendido al hacerlo.
+
 ## [1.5.0] — 2026-11-11
 
 **La versión de los plugins.** TDT local deja de ser solo un visor y pasa a poder cambiarse por dentro: **cuatro clases de plugin** (de página, con permisos aislados, con todo el poder y de desarrollo),
