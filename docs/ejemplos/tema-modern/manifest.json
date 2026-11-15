@@ -1,0 +1,8 @@
+{
+  "name": "Modern",
+  "version": "1.0.0",
+  "description": "Tema oscuro, limpio y redondeado: superficies en capas, controles con iconos, interruptores, diálogos y paneles de cristal sobre la imagen. Con un poco de código (page.js) que pone el logo del canal junto a su número, bajo la imagen.",
+  "author": "TDT local (ejemplo); tipografía Geist de Vercel (SIL OFL 1.1, ver Geist-LICENSE.txt)",
+  "homepage": "https://github.com/cibernicola/tdt-local",
+  "tdt": { "api": 1, "full": { "css": "tema.css", "page": "page.js" } }
+}
